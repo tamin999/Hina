@@ -59,7 +59,7 @@ module.exports = {
       
       msg += `📜 Use: ${prefix}help cmdName for details\n`;
       msg += `⏱ Uptime: ${days}d ${hours}h ${minutes}m ${seconds}s\n\n`;
-      msg += `👑 Owner: Gx Raihan\n`;
+      msg += `👑 Owner: Afrin \n`;
 
       api.sendMessage(msg, threadID,
         (error, messageInfo) => {
