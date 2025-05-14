@@ -1,11 +1,18 @@
-const fs = require("fs-extra");
+ const fs = require("fs-extra");
 const { utils } = global;
+
+function formatUptime(seconds) {
+	const h = Math.floor(seconds / 3600);
+	const m = Math.floor((seconds % 3600) / 60);
+	const s = Math.floor(seconds % 60);
+	return `${h}h ${m}m ${s}s`;
+}
 
 module.exports = {
 	config: {
 		name: "prefix",
 		version: "1.4",
-		author: "NTKhang",
+		author: "Bot Admin Gx Raihan",
 		countDown: 5,
 		role: 0,
 		description: "Thay đổi dấu lệnh của bot trong box chat của bạn hoặc cả hệ thống bot (chỉ admin bot)",
@@ -29,7 +36,7 @@ module.exports = {
 			confirmThisThread: "Please react to this message to confirm change prefix in your box chat",
 			successGlobal: "Changed prefix of system bot to: %1",
 			successThisThread: "Changed prefix in your box chat to: %1",
-			myPrefix: "🌐 System prefix: %1\n🛸 Your box chat prefix: %2"
+			myPrefix: "Your prefix: %1\nYour group chat prefix: %2\n\n╭───────────❍\n\n Bot Admin - afrin mow \nUptime - %3\n\n╰────────────𒁍"
 		}
 	},
 
@@ -81,7 +88,8 @@ module.exports = {
 	onChat: async function ({ event, message, getLang }) {
 		if (event.body && event.body.toLowerCase() === "prefix")
 			return () => {
-				return message.reply(getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID)));
+				const uptime = formatUptime(process.uptime());
+				return message.reply(getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID), uptime));
 			};
 	}
 };
