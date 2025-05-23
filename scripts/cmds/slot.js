@@ -123,4 +123,4 @@ function getDifferentSymbol(symbol, slotArray) {
     newSymbol = slotArray[Math.floor(Math.random() * slotArray.length)];
   } while (newSymbol === symbol);
   return newSymbol;
-        }
+      }
