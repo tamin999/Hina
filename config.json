@@ -1,6 +1,5 @@
 {
-
-   "facebookAccount": {
+  "facebookAccount": {
     "email": "",
     "password": "",
     "2FASecret": "hxhjdjj",
@@ -21,13 +20,13 @@
     "ignoreCommand": []
   },
   "adminBot": [
-
     "61576038873576"
   ],
   "whiteListMode": {
     "enable": false,
-    "whiteListIds": ["61576038873576",
-"",
+    "whiteListIds": [
+      "61576038873576",
+      "",
       ""
     ],
     "notes": "if you enable this feature, only the ids in the whiteListIds list can use the bot"
@@ -47,18 +46,17 @@
   },
   "timeZone": "Asia/Dhaka",
   "credentials": {
-		"gmailAccount": {
-			"email": "s.khasanmahamud324@gmail.com",
-			"clientId": "1038587958316-ugoqskt5s8itgca98ahjulp4691lhd9v.apps.googleusercontent.com",
-			"clientSecret": "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",
-			"refreshToken": "1//04ra2waD4ABt3CgYIARAAGAQSNgF-L9IrYkOHdKbzJwt5kMXGWgdKgc2aF3CxAdJ96G-113vAhZZR2L1fFuzCVslX_QvBGv2R0w",
-			"apiKey": ""
-		},
-		"gRecaptcha": {
-			"siteKey": "6LfR_eIqAAAAAJ7iv5GGCSTMTbhbzyUtpYQcwHXS",
-			"secretKey": "6LfR_eIqAAAAALlwNhRONS5BLwglWLVImOt-4LT-"
-		}
-	}
+    "gmailAccount": {
+      "email": "s.khasanmahamud324@gmail.com",
+      "clientId": "1038587958316-ugoqskt5s8itgca98ahjulp4691lhd9v.apps.googleusercontent.com",
+      "clientSecret": "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",
+      "refreshToken": "1//04ra2waD4ABt3CgYIARAAGAQSNgF-L9IrYkOHdKbzJwt5kMXGWgdKgc2aF3CxAdJ96G-113vAhZZR2L1fFuzCVslX_QvBGv2R0w",
+      "apiKey": ""
+    },
+    "gRecaptcha": {
+      "siteKey": "6LfR_eIqAAAAAJ7iv5GGCSTMTbhbzyUtpYQcwHXS",
+      "secretKey": "6LfR_eIqAAAAALlwNhRONS5BLwglWLVImOt-4LT-"
+    }
   },
   "dashBoard": {
     "enable": true,
@@ -149,6 +147,6 @@
     "selfListenEvent": true,
     "autoMarkDelivery": false,
     "autoReconnect": false,
-    "notes": "Document here: https://github.com/ntkhang03/fb-chat-api/blob/master/DOCS.md#apisetoptionsoptions "
+    "notes": "Document here: https://github.com/ntkhang03/fb-chat-api/blob/master/DOCS.md#apisetoptionsoptions"
   }
-  
+  }
