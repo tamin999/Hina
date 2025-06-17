@@ -1,129 +1,129 @@
 const axios = require("axios");
 
-const baseApiUrl = async () => {
-  const base = await axios.get(
-    "https://raw.githubusercontent.com/Mostakim0978/D1PT0/refs/heads/main/baseApiUrl.json"
-  );
-  return base.data.api;
+const USAGE_LIMIT = 15;
+const RESET_TIME = 7 * 60 * 60 * 1000; // 7 hours
+
+const mahmud = async () => {
+  const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/exe/main/baseApiUrl.json");
+  return base.data.mahmud;
 };
-
-if (!global.quizUsage) global.quizUsage = {};
-
-const COOLDOWN_HOURS = 8;
-const MAX_ATTEMPTS = 15;
-const COOLDOWN_MS = COOLDOWN_HOURS * 60 * 60 * 1000;
 
 module.exports = {
   config: {
     name: "quiz",
     aliases: ["qz"],
-    version: "1.1",
-    author: "Dipto + Anas",
-    countDown: 0,
+    version: "1.7",
+    author: "MahMUD",
+    countDown: 10,
     role: 0,
-    category: "game",
-    guide: "{p}quiz \n{p}quiz bn \n{p}quiz en",
+    category: "🎮 Game",
+    guide: {
+      en: "{pn} [en/bn] - Play a random quiz in English or Bangla!"
+    }
   },
 
   onStart: async function ({ api, event, usersData, args }) {
-    const userID = event.senderID;
-    const now = Date.now();
-
-    if (!global.quizUsage[userID]) {
-      global.quizUsage[userID] = {
-        lastReset: now,
-        count: 0,
-      };
-    } else {
-      const elapsed = now - global.quizUsage[userID].lastReset;
-      if (elapsed >= COOLDOWN_MS) {
-        global.quizUsage[userID].lastReset = now;
-        global.quizUsage[userID].count = 0;
-      }
-    }
-
-    if (global.quizUsage[userID].count >= MAX_ATTEMPTS) {
-      const timeLeft = COOLDOWN_MS - (now - global.quizUsage[userID].lastReset);
-      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      return api.sendMessage(`🚫 You've used all 15 attempts. Please wait ${hours}h ${minutes}m before trying again.`, event.threadID, event.messageID);
-    }
-
-    global.quizUsage[userID].count++;
-
-    const input = args.join('').toLowerCase() || "bn";
-    let timeout = 300;
-    let category = (input === "en" || input === "english") ? "english" : "bangla";
-
     try {
-      const response = await axios.get(
-        `${await baseApiUrl()}/quiz?category=${category}&q=random`
-      );
+      const input = args.join("").toLowerCase() || "bn";
+      const category = input === "en" || input === "english" ? "english" : "bangla";
 
-      const quizData = response.data.question;
-      const { question, correctAnswer, options } = quizData;
+      const userData = await usersData.get(event.senderID) || {};
+      const now = Date.now();
+
+      // Setup or reset usage
+      if (!userData.quizUsage) {
+        userData.quizUsage = {
+          count: 0,
+          lastReset: now
+        };
+      }
+
+      if (now - userData.quizUsage.lastReset >= RESET_TIME) {
+        userData.quizUsage.count = 0;
+        userData.quizUsage.lastReset = now;
+      }
+
+      // Limit check
+      if (userData.quizUsage.count >= USAGE_LIMIT) {
+        const remaining = RESET_TIME - (now - userData.quizUsage.lastReset);
+        const mins = Math.ceil(remaining / (60 * 1000));
+        return api.sendMessage(
+          `⚠️ You can only play this quiz 15 times every 7 hours.\n⏳ Please wait ${mins} more minute(s) before trying again.`,
+          event.threadID,
+          event.messageID
+        );
+      }
+
+      userData.quizUsage.count += 1;
+      await usersData.set(event.senderID, userData);
+
+      const apiUrl = await mahmud();
+      const res = await axios.get(`${apiUrl}/api/quiz?category=${category}`);
+      const quiz = res.data;
+
+      if (!quiz) {
+        return api.sendMessage("❌ No quiz available in this category right now.", event.threadID, event.messageID);
+      }
+
+      const { question, correctAnswer, options } = quiz;
       const { a, b, c, d } = options;
-      const namePlayerReact = await usersData.getName(event.senderID);
+
       const quizMsg = {
-        body:
-          `╭──✦ ${question}\n` +
-          `├‣ 𝗔) ${a}\n` +
-          `├‣ 𝗕) ${b}\n` +
-          `├‣ 𝗖) ${c}\n` +
-          `├‣ 𝗗) ${d}\n` +
-          `╰──────────────────‣\n` +
-          `Reply to this message with your answer.`,
+        body: `🎯 𝗤𝘂𝗶𝘇 𝗧𝗶𝗺𝗲!\n━━━━━━━━━━━━━━━━━\n❓ Question: ${question}\n\n🅐 ${a}\n🅑 ${b}\n🅒 ${c}\n🅓 ${d}\n━━━━━━━━━━━━━━━━━\n📩 Reply with the correct option (A / B / C / D)\n!`
       };
 
-      api.sendMessage(
-        quizMsg,
-        event.threadID,
-        (error, info) => {
-          global.GoatBot.onReply.set(info.messageID, {
-            type: "reply",
-            commandName: this.config.name,
-            author: event.senderID,
-            messageID: info.messageID,
-            dataGame: quizData,
-            correctAnswer,
-            nameUser: namePlayerReact
-          });
-          setTimeout(() => {
-            api.unsendMessage(info.messageID);
-          }, timeout * 1000);
-        },
-        event.messageID,
-      );
+      api.sendMessage(quizMsg, event.threadID, (err, info) => {
+        global.GoatBot.onReply.set(info.messageID, {
+          type: "reply",
+          commandName: this.config.name,
+          author: event.senderID,
+          messageID: info.messageID,
+          correctAnswer
+        });
+
+        setTimeout(() => {
+          api.unsendMessage(info.messageID);
+        }, 40000);
+      }, event.messageID);
+
     } catch (error) {
-      console.error("❌ | Error occurred:", error);
-      api.sendMessage(error.message, event.threadID, event.messageID);
+      console.error(error);
+      api.sendMessage("🚨 Failed to fetch quiz! Please try again later.", event.threadID, event.messageID);
     }
   },
 
-  onReply: async ({ event, api, Reply, usersData }) => {
-    const { correctAnswer, nameUser, author } = Reply;
-    if (event.senderID !== author)
-      return api.sendMessage("Who are you bby🐸🦎", event.threadID, event.messageID);
+  onReply: async function ({ event, api, Reply, usersData }) {
+    const { correctAnswer, author } = Reply;
 
-    const userReply = event.body.toLowerCase();
-    await api.unsendMessage(Reply.messageID).catch(console.error);
+    if (event.senderID !== author) {
+      return api.sendMessage("⚠️ This is not your quiz, please wait for your own turn!", event.threadID, event.messageID);
+    }
 
-    if (userReply === correctAnswer.toLowerCase()) {
-      const rewardCoins = 300;
-      const rewardExp = 100;
+    await api.unsendMessage(Reply.messageID);
+    const userAnswer = event.body.trim().toLowerCase();
+
+    if (userAnswer === correctAnswer.toLowerCase()) {
+      const rewardCoins = 500;
+      const rewardExp = 121;
       const userData = await usersData.get(author);
 
       await usersData.set(author, {
         money: userData.money + rewardCoins,
         exp: userData.exp + rewardExp,
-        data: userData.data,
+        data: userData.data
       });
 
-      const correctMsg = `🎉 Congratulations, ${nameUser}! 🌟🎉\n\nYou're a Quiz Champion! 🏆\n\nYou've earned ${rewardCoins} Coins 💰 and ${rewardExp} EXP 🌟\n\nKeep it up!!`;
-      api.sendMessage(correctMsg, event.threadID, event.messageID);
+      return api.sendMessage(
+        `✅ Correct Answer!\n━━━━━━━━━━━━━━━\n🎉 You earned:\n➤ 💰 ${rewardCoins} Coins\n➤ ✨ ${rewardExp} EXP\n━━━━━━━━━━━━━━━\nGreat job! Keep going!`,
+        event.threadID,
+        event.messageID
+      );
     } else {
-      const incorrectMsg = `❌ | Sorry, ${nameUser}, wrong answer.\n✅ | The correct answer was: ${correctAnswer}`;
-      api.sendMessage(incorrectMsg, event.threadID, event.messageID);
+      return api.sendMessage(
+        `❌ Incorrect Answer.\n━━━━━━━━━━━━━━━\n✔️ The correct answer was: ${correctAnswer}\n━━━━━━━━━━━━━━━\nTry again next time!`,
+        event.threadID,
+        event.messageID
+      );
     }
-  },
+  }
 };
