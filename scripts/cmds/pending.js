@@ -48,7 +48,7 @@ module.exports = {
 
       try {
         await api.sendMessage(
-          `✅ 𝐺𝑟𝑜𝑢𝑝 𝐻𝑎𝑠 𝐵𝑒𝑒𝑛 𝑆𝑢𝑐𝑐𝑒𝑠𝑠𝑓𝑢𝑙𝑙𝑦 𝐴𝑝𝑝𝑟𝑜𝑣𝑒𝑑 𝐵𝑦 Afrin   ♡︎\n\n📜 𝑇𝑦𝑝𝑒 ${global.GoatBot.config.prefix}𝐻𝑒𝑙𝑝 𝑇𝑜 𝑆𝑒𝑒 𝐴𝑙𝑙 𝐶𝑜𝑚𝑚𝑎𝑛𝑑𝑠!`,
+          `𝗚𝗥𝗨𝗣𝗘 𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗 𝗦𝗨𝗖𝗖𝗘𝗦𝗦𝗙𝗨𝗟𝗟  ♡︎\n\n 🌸 𝗧𝗬𝗣𝗘 ${global.GoatBot.config.prefix}𝐻𝑒𝑙𝑝 𝑇𝑜 𝑆𝑒𝑒 𝐴𝑙𝑙 𝐶𝑜𝑚𝑚𝑎𝑛𝑑𝑠!`,
           group.threadID
         );
 
