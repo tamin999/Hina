@@ -21,7 +21,7 @@ module.exports = {
       nick: "ℛ𝒶𝒽𝓊𝓊",
       hobby: "Play game",
       from: "Dhaka, Demra",
-      age: "IDK 🤭",
+      age: "Error 🙂",
       status: "Student"
     };
 
