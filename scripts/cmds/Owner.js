@@ -7,7 +7,7 @@ module.exports = {
     name: "owner",
     version: "3.9",
     author: "Raihan",
-    category: "info",
+    category: "owner",
     guide: {
       en: "Use !owner or type Hinata Admin. Type Hinata add support gc / Hinata add main gc to join GC."
     }
