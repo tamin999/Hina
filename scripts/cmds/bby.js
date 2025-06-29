@@ -5,11 +5,11 @@ const mahmuds =
    "bby",
    "babu",
    "bbu",
-   "jan",
+   "janu",
    "bot",
    "জান",
    "বেবি",
-"hinata",
+"🌷hinata",
 
   ]; 
 
@@ -148,7 +148,7 @@ module.exports = {
     const wordCount = words.length;
 
     if (event.type !== "message_reply" && mahmuds.some(word => message.startsWith(word))) {
-      api.setMessageReaction("🪽", event.messageID, () => {}, true);
+      api.setMessageReaction("🩷", event.messageID, () => {}, true);
       api.sendTypingIndicator(event.threadID, true);
 
       if (wordCount === 1) {
