@@ -1,1 +1,3 @@
-welcome to goatbot-v2
+# GAOT BOT PERSONAL BOT 
+# OWNER - NTGKHAN 
+# EDITED - GX RAIHAN 
