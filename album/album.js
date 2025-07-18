@@ -69,3 +69,7 @@ const album = {
 };
 
 module.exports = { album };
+
+
+
+global.album = album;
