@@ -90,7 +90,10 @@ global.GoatBot = {
 	storage5Message: [], // store 5 message to check listening loop
 	fcaApi: null, // store fca api
 	botID: null // store bot id
+	
 };
+const album = require("/album/album.js");
+global.album = album;
 
 global.db = {
 	// all data
