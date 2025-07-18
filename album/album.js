@@ -72,4 +72,4 @@ module.exports = { album };
 
 
 
-global.album = album;
+
