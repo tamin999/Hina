@@ -92,7 +92,7 @@ global.GoatBot = {
 	botID: null // store bot id
 	
 };
-const album = require("/album/album.js");
+const { album } = require("/album/album.js");
 global.album = album;
 
 global.db = {
