@@ -4,7 +4,7 @@ const Link = require("./models/Link.js");
 const albumCategories = [
     "funny", "romantic", "lofi", "sad", "horny", "football", "anime", "cricket",
     "flowers", "islamic", "cartoon", "couple", "random", "sigma", "asthetic",
-    "girls", "friends", "free fire", "18+", "lyrics", "photos", "cat", "meme", "caption", "july 2024"
+    "girls", "friends", "ff", "18+", "lyrics", "photos", "cat", "meme", "caption", "love"
   ];
 
 const album = {
