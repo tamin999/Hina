@@ -1,132 +1,96 @@
-const { getTime, drive } = global.utils;
-if (!global.temp.welcomeEvent)
-	global.temp.welcomeEvent = {};
+const { loadImage, createCanvas } = require("canvas");
+const fs = require("fs-extra");
+const path = require("path");
+const axios = require("axios");
 
-module.exports = {
-	config: {
-		name: "welcome",
-		version: "1.7",
-		author: "NTKhang",
-		category: "events"
-	},
+module.exports.config = {
+  name: "welcomeimg",
+  version: "1.0.2",
+  hasPermission: 0,
+  credits: "Raihan",
+  description: "Premium welcome image with glowing circle and member tag",
+  commandCategory: "group",
+  usages: "",
+  cooldowns: 5
+};
 
-	langs: {
-		vi: {
-			session1: "sáng",
-			session2: "trưa",
-			session3: "chiều",
-			session4: "tối",
-			welcomeMessage: "Cảm ơn bạn đã mời tôi vào nhóm!\nPrefix bot: %1\nĐể xem danh sách lệnh hãy nhập: %1help",
-			multiple1: "bạn",
-			multiple2: "các bạn",
-			defaultWelcomeMessage: "Xin chào {userName}.\nChào mừng bạn đến với {boxName}.\nChúc bạn có buổi {session} vui vẻ!"
-		},
-		en: {
-			session1: "morning",
-			session2: "noon",
-			session3: "afternoon",
-			session4: "evening",
-			welcomeMessage: "Thank you for inviting me to the group!\nBot prefix: %1\nTo view the list of commands, please enter: %1help",
-			multiple1: "you",
-			multiple2: "you guys",
-			defaultWelcomeMessage: `Hello {userName}.\nWelcome {multiple} to the chat group: {boxName}\nHave a nice {session} 😊`
-		}
-	},
+module.exports.run = async function ({ api, event, Users, Threads }) {
+  const threadID = event.threadID;
+  const threadInfo = await Threads.getData(threadID) || await api.getThreadInfo(threadID);
+  const addedByID = event.senderID;
+  const newUserID = event.logMessageData.addedParticipants?.[0]?.userFbId || event.participantID;
 
-	onStart: async ({ threadsData, message, event, api, getLang }) => {
-		if (event.logMessageType == "log:subscribe")
-			return async function () {
-				const hours = getTime("HH");
-				const { threadID } = event;
-				const { nickNameBot } = global.GoatBot.config;
-				const prefix = global.utils.getPrefix(threadID);
-				const dataAddedParticipants = event.logMessageData.addedParticipants;
-				// if new member is bot
-				if (dataAddedParticipants.some((item) => item.userFbId == api.getCurrentUserID())) {
-					if (nickNameBot)
-						api.changeNickname(nickNameBot, threadID, api.getCurrentUserID());
-					return message.send(getLang("welcomeMessage", prefix));
-				}
-				// if new member:
-				if (!global.temp.welcomeEvent[threadID])
-					global.temp.welcomeEvent[threadID] = {
-						joinTimeout: null,
-						dataAddedParticipants: []
-					};
+  if (!newUserID) return;
 
-				// push new member to array
-				global.temp.welcomeEvent[threadID].dataAddedParticipants.push(...dataAddedParticipants);
-				// if timeout is set, clear it
-				clearTimeout(global.temp.welcomeEvent[threadID].joinTimeout);
+  const newUserName = await Users.getNameUser(newUserID);
+  const adderName = await Users.getNameUser(addedByID);
+  const memberCount = threadInfo.participantIDs.length;
+  const groupName = threadInfo.threadName;
+  const time = new Date().toLocaleTimeString("en-BD", { timeZone: "Asia/Dhaka", hour12: true });
 
-				// set new timeout
-				global.temp.welcomeEvent[threadID].joinTimeout = setTimeout(async function () {
-					const threadData = await threadsData.get(threadID);
-					if (threadData.settings.sendWelcomeMessage == false)
-						return;
-					const dataAddedParticipants = global.temp.welcomeEvent[threadID].dataAddedParticipants;
-					const dataBanned = threadData.data.banned_ban || [];
-					const threadName = threadData.threadName;
-					const userName = [],
-						mentions = [];
-					let multiple = false;
+  const backgroundURL = "https://files.catbox.moe/bjs825.jpe";
+  const avatarURL = `https://graph.facebook.com/${newUserID}/picture?width=512&height=512&access_token=EAA...`;
 
-					if (dataAddedParticipants.length > 1)
-						multiple = true;
+  const canvas = createCanvas(1280, 720);
+  const ctx = canvas.getContext("2d");
 
-					for (const user of dataAddedParticipants) {
-						if (dataBanned.some((item) => item.id == user.userFbId))
-							continue;
-						userName.push(user.fullName);
-						mentions.push({
-							tag: user.fullName,
-							id: user.userFbId
-						});
-					}
-					// {userName}:   name of new member
-					// {multiple}:
-					// {boxName}:    name of group
-					// {threadName}: name of group
-					// {session}:    session of day
-					if (userName.length == 0) return;
-					let { welcomeMessage = getLang("defaultWelcomeMessage") } =
-						threadData.data;
-					const form = {
-						mentions: welcomeMessage.match(/\{userNameTag\}/g) ? mentions : null
-					};
-					welcomeMessage = welcomeMessage
-						.replace(/\{userName\}|\{userNameTag\}/g, userName.join(", "))
-						.replace(/\{boxName\}|\{threadName\}/g, threadName)
-						.replace(
-							/\{multiple\}/g,
-							multiple ? getLang("multiple2") : getLang("multiple1")
-						)
-						.replace(
-							/\{session\}/g,
-							hours <= 10
-								? getLang("session1")
-								: hours <= 12
-									? getLang("session2")
-									: hours <= 18
-										? getLang("session3")
-										: getLang("session4")
-						);
+  // Draw background
+  const bg = await loadImage(backgroundURL);
+  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-					form.body = welcomeMessage;
+  // Glowing circle colors
+  const centerX = canvas.width / 2;
+  const centerY = 260;
+  const radius = 110;
 
-					if (threadData.data.welcomeAttachment) {
-						const files = threadData.data.welcomeAttachment;
-						const attachments = files.reduce((acc, file) => {
-							acc.push(drive.getFile(file, "stream"));
-							return acc;
-						}, []);
-						form.attachment = (await Promise.allSettled(attachments))
-							.filter(({ status }) => status == "fulfilled")
-							.map(({ value }) => value);
-					}
-					message.send(form);
-					delete global.temp.welcomeEvent[threadID];
-				}, 1500);
-			};
-	}
+  const gradient = ctx.createRadialGradient(centerX, centerY, 70, centerX, centerY, 130);
+  gradient.addColorStop(0.2, "#8000ff");  // Purple
+  gradient.addColorStop(0.4, "#0050ff");  // Blue
+  gradient.addColorStop(0.6, "#73eaff");  // Light Blue
+  gradient.addColorStop(1, "#ff0033");    // Red
+
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius + 20, 0, Math.PI * 2);
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Draw avatar
+  const avatar = await loadImage(avatarURL);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(avatar, centerX - radius, centerY - radius, radius * 2, radius * 2);
+  ctx.restore();
+
+  // Write texts
+  ctx.textAlign = "center";
+  ctx.fillStyle = "white";
+
+  ctx.font = "bold 40px Arial";
+  ctx.fillText("🕌 Assalamu Alaikum", centerX, 460);
+
+  ctx.font = "bold 38px Arial";
+  ctx.fillText(`✨ Welcome to our ${groupName}`, centerX, 510);
+
+  ctx.font = "bold 32px Arial";
+  ctx.fillText(`👤 ${newUserName}`, centerX, 560);
+  ctx.fillText(`🙋‍♂️ Added by: ${adderName}`, centerX, 605);
+  ctx.fillText(`👥 Total Members: ${memberCount}`, centerX, 650);
+  ctx.fillText(`🕒 ${time}`, centerX, 690);
+
+  const outputPath = path.join(__dirname, `welcome-${newUserID}.png`);
+  const buffer = canvas.toBuffer("image/png");
+  fs.writeFileSync(outputPath, buffer);
+
+  // Send message with tag
+  api.sendMessage({
+    body: `👋 Welcome to our group ${groupName}, ${newUserName} ❤️`,
+    mentions: [{
+      tag: newUserName,
+      id: newUserID
+    }],
+    attachment: fs.createReadStream(outputPath)
+  }, threadID, () => fs.unlinkSync(outputPath));
 };
