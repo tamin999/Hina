@@ -22,15 +22,15 @@ module.exports = {
     let targetID =
       event.type === "message_reply"
         ? event.messageReply.senderID
-        : Object.keys(event.mentions)[0];
+        : Object.keys(event.mentions || {})[0];
 
     if (!targetID)
       return message.reply("🦆 Reply to someone's message to turn them into a Duck!");
 
     const baseFolder = path.join(__dirname, "Arijit_duck");
     const bgPath = path.join(baseFolder, "duck_bg.jpg");
-    const avatarPath = path.join(baseFolder, avatar_${targetID}.png);
-    const outputPath = path.join(baseFolder, duck_result_${targetID}.png);
+    const avatarPath = path.join(baseFolder, `avatar_${targetID}.png`);
+    const outputPath = path.join(baseFolder, `duck_result_${targetID}.png`);
 
     try {
       if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder);
@@ -41,11 +41,9 @@ module.exports = {
         fs.writeFileSync(bgPath, res.data);
       }
 
+      const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
       const avatarBuffer = (
-        await axios.get(
-          https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662,
-          { responseType: "arraybuffer" }
-        )
+        await axios.get(avatarURL, { responseType: "arraybuffer" })
       ).data;
       fs.writeFileSync(avatarPath, avatarBuffer);
 
@@ -55,7 +53,7 @@ module.exports = {
       // Resize avatar and make it circular
       avatar.resize(100, 100).circle();
 
-      // Adjusted position for duck face (change these if needed)
+      // Position for duck face overlay
       const x = 184;
       const y = 32;
 
@@ -68,7 +66,7 @@ module.exports = {
 
       await message.reply(
         {
-          body: 😂 ${name} has transformed into a Duck! 🦆,
+          body: `😂 ${name} has transformed into a Duck! 🦆`,
           mentions: [{ tag: name, id: targetID }],
           attachment: fs.createReadStream(outputPath),
         },
@@ -83,3 +81,4 @@ module.exports = {
     }
   },
 };
+
