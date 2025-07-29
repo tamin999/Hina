@@ -1,135 +1,88 @@
-const loveSymbols = ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤"];
-
-// Cache to track usage per user
-const userUsage = new Map();
-
 module.exports = {
   config: {
-    name: "slot",
-    version: "1.1",
-    author: "Abir",
-    countDown: 10,
+    name: "slot1",
+    version: "2.1",
+    author: "Arijit",
+    countDown: 15,
     shortDescription: {
-      en: "7-color Love themed slot game",
+      en: "slot game 🙂",
     },
     longDescription: {
-      en: "Try your luck with colorful love emojis and win coins!",
+      en: "Try your luck in a slot game",
     },
     category: "game",
   },
 
   langs: {
     en: {
-      invalid_amount: "❗️ Please enter a valid and positive amount to play!",
-      not_enough_money: "💸 Sorry! You don't have enough balance for that bet.",
-      win: "🎉 Congratulations! You won $%1! 🌈\n%2",
-      lose: "💔 Better luck next time! You lost $%1.\n%2",
-      jackpot: "🌟 JACKPOT! Triple %1 symbols! You won $%2! 🌈\n%3",
-      usage_limit: "⏳ You have used this command 15 times in the last 7 hours.\nPlease wait %1 before trying again.",
-    }
+      invalid_amount: "𝗣𝗹𝗲𝗮𝘀𝗲 𝗲𝗻𝘁𝗲𝗿 𝗮 𝘃𝗮𝗹𝗶𝗱 𝗮𝗺𝗼𝘂𝗻𝘁 😿💅",
+      not_enough_money: "𝗣𝗹𝗲𝗮𝘀𝗲 𝗰𝗵𝗲𝗰𝗸 𝘆𝗼𝘂𝗿 𝗯𝗮𝗹𝗮𝗻𝗰𝗲 🤡",
+      win_message: ">🎀\n• 𝐁𝐚𝐛𝐲, 𝐘𝐨𝐮 𝐰𝐨𝐧 $%1\n• 𝐆𝐚𝐦𝐞 𝐑𝐞𝐬𝐮𝐥𝐭𝐬 [ %2 | %3 | %4 ]",
+      lose_message: ">🎀\n• 𝐁𝐚𝐛𝐲, 𝐘𝐨𝐮 𝐥𝐨𝐬𝐭 $%1\n• 𝐆𝐚𝐦𝐞 𝐑𝐞𝐬𝐮𝐥𝐭𝐬 [ %2 | %3 | %4 ]",
+      jackpot_message: ">🎀\n𝐉𝐚𝐜𝐤𝐩𝐨𝐭! 𝐘𝐨𝐮 𝐰𝐨𝐧 $%1 𝐰𝐢𝐭𝐡 𝐭𝐡𝐫𝐞𝐞 %2 𝐬𝐲𝐦𝐛𝐨𝐥𝐬, 𝐁𝐚𝐛𝐲!\n• 𝐆𝐚𝐦𝐞 𝐑𝐞𝐬𝐮𝐥𝐭𝐬 [ %3 | %4 | %5 ]"
+    },
   },
 
   onStart: async function ({ args, message, event, usersData, getLang }) {
-    const userId = event.senderID;
-    const now = Date.now();
+    const { senderID } = event;
+    const userData = await usersData.get(senderID);
+    const amount = parseInt(args[0]);
 
-    // Usage limit check
-    const usageData = userUsage.get(userId) || { count: 0, firstUse: now };
-    const elapsed = now - usageData.firstUse;
-    const limitDuration = 7 * 60 * 60 * 1000; // 7 hours in ms
-    const maxUses = 15;
-
-    if (elapsed > limitDuration) {
-      // Reset after 7 hours
-      userUsage.set(userId, { count: 0, firstUse: now });
-    } else if (usageData.count >= maxUses) {
-      // Calculate remaining cooldown
-      const timeLeftMs = limitDuration - elapsed;
-      const timeLeftStr = msToHMS(timeLeftMs);
-      return message.reply(getLang("usage_limit", timeLeftStr));
-    }
-
-    // Update usage
-    usageData.count = (usageData.count || 0) + 1;
-    if (!usageData.firstUse || elapsed > limitDuration) usageData.firstUse = now;
-    userUsage.set(userId, usageData);
-
-    // --- Game logic below ---
-    const userData = await usersData.get(userId);
-    const bet = parseInt(args[0]);
-
-    if (isNaN(bet) || bet <= 0) {
+    if (isNaN(amount) || amount <= 0) {
       return message.reply(getLang("invalid_amount"));
     }
 
-    if (bet > userData.money) {
+    if (amount > userData.money) {
       return message.reply(getLang("not_enough_money"));
     }
 
-    // Deduct bet
-    await usersData.set(userId, {
-      money: userData.money - bet,
+    const slots = ["💚", "💛", "💙", "💜", "🤎", "🤍", "❤️"];
+    const results = [
+      slots[Math.floor(Math.random() * slots.length)],
+      slots[Math.floor(Math.random() * slots.length)],
+      slots[Math.floor(Math.random() * slots.length)],
+    ];
+
+    const winnings = calculateWinnings(results, amount);
+    await usersData.set(senderID, {
+      money: userData.money + winnings,
       data: userData.data,
     });
 
-    message.reply(getLang("spinning"));
-
-    // Spin slots
-    const slot1 = loveSymbols[Math.floor(Math.random() * loveSymbols.length)];
-    const slot2 = loveSymbols[Math.floor(Math.random() * loveSymbols.length)];
-    const slot3 = loveSymbols[Math.floor(Math.random() * loveSymbols.length)];
-
-    const winnings = calculateWinnings(slot1, slot2, slot3, bet);
-
-    // Update money with winnings
-    await usersData.set(userId, {
-      money: userData.money - bet + winnings,
-      data: userData.data,
-    });
-
-    const slotsDisplay = `[ ${slot1} | ${slot2} | ${slot3} ]`;
-    let responseMessage = "";
-
-    if (winnings > 0) {
-      if (slot1 === slot2 && slot2 === slot3) {
-        responseMessage = getLang("jackpot", slot1, winnings, slotsDisplay);
-      } else {
-        responseMessage = getLang("win", winnings, slotsDisplay);
-      }
-    } else {
-      responseMessage = getLang("lose", -winnings, slotsDisplay);
-    }
-
-    return message.reply(responseMessage);
-  }
+    const messageText = formatResult(results, winnings, getLang);
+    return message.reply(messageText);
+  },
 };
 
-function calculateWinnings(s1, s2, s3, bet) {
-  const chance = Math.random();
-
-  if (chance < 0.75) {
-    return -bet;  // 75% lose
+function calculateWinnings([a, b, c], bet) {
+  if (a === b && b === c) {
+    if (a === "❤️") return bet * 10;  // Jackpot
+    return bet * 5;                   // 3 same, non-jackpot
   }
-  if (chance < 0.95) {
-    // 20% small win
-    if (s1 === s2 || s2 === s3 || s1 === s3) {
-      return bet * 1.5;
-    }
-    return bet * 1;
-  }
-  // 5% jackpot only if all three match
-  if (s1 === s2 && s2 === s3) {
-    return bet * 5;
-  }
-  return -bet;
+  if (a === b || b === c || a === c) return bet * 2; // Any two same
+  return -bet; // Lose
 }
 
-// Helper to convert ms to HH:MM:SS string
-function msToHMS(ms) {
-  let seconds = Math.floor(ms / 1000);
-  const h = Math.floor(seconds / 3600);
-  seconds %= 3600;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${h}h ${m}m ${s}s`;
+function formatResult([a, b, c], winnings, getLang) {
+  const formattedWinnings = formatMoney(Math.abs(winnings));
+
+  if (a === b && b === c && a === "❤️") {
+    return getLang("jackpot_message", formattedWinnings, a, a, b, c);
+  }
+
+  if (winnings > 0) {
+    return getLang("win_message", formattedWinnings, a, b, c);
+  }
+
+  return getLang("lose_message", formattedWinnings, a, b, c);
 }
+
+function formatMoney(amount) {
+  if (amount >= 1e12) return (amount / 1e12).toFixed(2) + "𝗧";
+  if (amount >= 1e9) return (amount / 1e9).toFixed(2) + "𝗕";
+  if (amount >= 1e6) return (amount / 1e6).toFixed(2) + "𝐌";
+  if (amount >= 1e3) return (amount / 1e3).toFixed(2) + "𝗞";
+  return amount.toString();
+}
+
+  
