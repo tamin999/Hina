@@ -1,5 +1,5 @@
-const axios = require("axios");
-const fs = require("fs-extra");
+const axios = require ("axios");
+const fs = require ("fs-extra");
 
 module.exports = {
   config: {
@@ -9,76 +9,47 @@ module.exports = {
     author: "OTINXSANDIP",
     countDown: 5,
     role: 0,
-    shortDescription: "Pair you with a random partner",
-    longDescription: "Get paired randomly with someone in the chat with a love percentage",
+    shortDescription: " ",
+    longDescription: "",
     category: "love",
     guide: "{pn}"
   },
 
-  onStart: async function({ api, event, usersData }) {
-    try {
-      const { threadID, messageID, senderID } = event;
-      const threadInfo = await api.getThreadInfo(threadID);
-      const participantIDs = threadInfo.participantIDs || [];
-      const botID = api.getCurrentUserID();
+  onStart: async function({ api, event, threadsData, usersData }) {
 
-      // Filter out bot and sender
-      const listUserID = participantIDs.filter(id => id !== botID && id !== senderID);
-      if (listUserID.length === 0) {
-        return api.sendMessage("No one else is here to pair with!", threadID, messageID);
-      }
+    const { threadID, messageID, senderID } = event;
+    const { participantIDs } = await api.getThreadInfo(threadID);
+    var tle = Math.floor(Math.random() * 101);
+    var namee = (await usersData.get(senderID)).name
+    const botID = api.getCurrentUserID();
+    const listUserID = participantIDs.filter(ID => ID != botID && ID != senderID);
+    var id = listUserID[Math.floor(Math.random() * listUserID.length)];
+    var name = (await usersData.get(id)).name
+    var arraytag = [];
+    arraytag.push({ id: senderID, tag: namee });
+    arraytag.push({ id: id, tag: name });
 
-      // Choose random partner
-      const partnerID = listUserID[Math.floor(Math.random() * listUserID.length)];
-      const senderName = (await usersData.get(senderID)).name || "User";
-      const partnerName = (await usersData.get(partnerID)).name || "Partner";
+    let Avatar = (await axios.get(https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662, { responseType: "arraybuffer" })).data;
+    fs.writeFileSync(__dirname + "/cache/avt.png", Buffer.from(Avatar, "utf-8"));
 
-      // Prepare mentions
-      const mentions = [
-        { id: senderID, tag: senderName },
-        { id: partnerID, tag: partnerName }
-      ];
+    let gifLove = (await axios.get(https://i.ibb.co/y4dWfQq/image.gif, { responseType: "arraybuffer" })).data;
+    fs.writeFileSync(__dirname + "/cache/giflove.png", Buffer.from(gifLove, "utf-8"));
 
-      // Ensure cache folder exists
-      await fs.ensureDir(__dirname + "/cache");
+    let Avatar2 = (await axios.get(https://graph.facebook.com/${id}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662, { responseType: "arraybuffer" })).data;
+    fs.writeFileSync(__dirname + "/cache/avt2.png", Buffer.from(Avatar2, "utf-8"));
 
-      // Fetch avatars and love gif
-      const avatar1 = (await axios.get(`https://graph.facebook.com/${senderID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: "arraybuffer" })).data;
-      fs.writeFileSync(__dirname + "/cache/avt.png", Buffer.from(avatar1, "binary"));
+    var imglove = [];
 
-      const avatar2 = (await axios.get(`https://graph.facebook.com/${partnerID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`, { responseType: "arraybuffer" })).data;
-      fs.writeFileSync(__dirname + "/cache/avt2.png", Buffer.from(avatar2, "binary"));
+    imglove.push(fs.createReadStream(__dirname + "/cache/avt.png"));
+    imglove.push(fs.createReadStream(__dirname + "/cache/giflove.png"));
+    imglove.push(fs.createReadStream(__dirname + "/cache/avt2.png"));
 
-      const gifLove = (await axios.get(`https://i.ibb.co/y4dWfQq/image.gif`, { responseType: "arraybuffer" })).data;
-      fs.writeFileSync(__dirname + "/cache/giflove.gif", Buffer.from(gifLove, "binary"));
+    var msg = {
+      body: <🎀Successful pairing!\n💌Wish you two hundred years of happiness\n✨Double ratio: ${tle}%\n${namee} 💗 ${name},
+      mentions: arraytag,
+      attachment: imglove
+    };
 
-      // Generate random love percentage
-      const lovePercent = Math.floor(Math.random() * 101);
-
-      // Prepare attachments as streams
-      const attachments = [
-        fs.createReadStream(__dirname + "/cache/avt.png"),
-        fs.createReadStream(__dirname + "/cache/giflove.gif"),
-        fs.createReadStream(__dirname + "/cache/avt2.png")
-      ];
-
-      // Send message
-      const msg = {
-        body: `🎀 Successful pairing!\n💌 Wishing you two hundred years of happiness\n✨ Love percentage: ${lovePercent}%\n${senderName} 💗 ${partnerName}`,
-        mentions,
-        attachment: attachments
-      };
-
-      return api.sendMessage(msg, threadID, messageID, () => {
-        // Clean up temp files
-        fs.unlinkSync(__dirname + "/cache/avt.png");
-        fs.unlinkSync(__dirname + "/cache/avt2.png");
-        fs.unlinkSync(__dirname + "/cache/giflove.gif");
-      });
-
-    } catch (error) {
-      console.error("Error in pair3 command:", error);
-      return api.sendMessage("Oops! Something went wrong while pairing you. Please try again.", event.threadID, event.messageID);
-    }
+    return api.sendMessage(msg, event.threadID, event.messageID);
   }
 };
