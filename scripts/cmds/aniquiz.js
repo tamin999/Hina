@@ -1,10 +1,27 @@
-const a = require('axios');
-const b = require('fs-extra');
-const c = require('path');
-const d = require('util'); 
+const axios = require("axios");
+const fs = require("fs-extra");
+const path = require("path");
+const util = require("util");
 
-const e = c.join(__dirname, 'cache');
-const f = c.join(__dirname, 'anime.json');
+const cacheDir = path.join(__dirname, "cache");
+const userDataFile = path.join(__dirname, "anime.json");
+const usageFile = path.join(__dirname, "usage.json");
+
+const LIMIT = 20;
+const WINDOW_MS = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+
+async function loadUsage() {
+  try {
+    const raw = await fs.readFile(usageFile, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+async function saveUsage(data) {
+  await fs.writeFile(usageFile, JSON.stringify(data, null, 2), "utf8");
+}
 
 module.exports = {
   config: {
@@ -24,143 +41,156 @@ module.exports = {
   onStart: async function ({ event, message, usersData, api, args }) {
     try {
       if (!event || !message) return;
-      if (args.length === 1 && args[0] === "top") {
+
+      // === Usage limit check ===
+      const userId = event.senderID;
+      const usageData = await loadUsage();
+
+      let userUsage = usageData[userId];
+      const now = Date.now();
+
+      if (!userUsage) {
+        // First use
+        usageData[userId] = { count: 1, startTime: now };
+      } else {
+        if (now - userUsage.startTime > WINDOW_MS) {
+          // Reset usage window
+          usageData[userId] = { count: 1, startTime: now };
+        } else {
+          // Within usage window
+          if (userUsage.count >= LIMIT) {
+            return message.reply(
+              `❌ You have reached the limit of ${LIMIT} uses in 7 hours. Please wait before using again.`
+            );
+          }
+          usageData[userId].count++;
+        }
+      }
+      await saveUsage(usageData);
+      // === End usage limit check ===
+
+      if (args.length === 1 && args[0].toLowerCase() === "top") {
         return await this.showTopPlayers({ message, usersData, api });
       }
 
-      const h = await this.fetchCharacterData();
-      if (!h || !h.data) {
-        console.error("error");
-        message.reply("error");
-        return;
+      const characterData = await this.fetchCharacterData();
+      if (!characterData || !characterData.data) {
+        console.error("Failed to fetch character data.");
+        return message.reply("❌ Error fetching character data. Please try again later.");
       }
 
-      const { image, traits, tags, fullName, firstName } = h.data;
+      const { image, traits, tags, fullName, firstName } = characterData.data;
 
       const imageStream = await this.downloadImage(image);
-
       if (!imageStream) {
-        console.error("Error");
-        message.reply("An error occurred.");
-        return;
+        console.error("Failed to download character image.");
+        return message.reply("❌ Error downloading image.");
       }
 
-      const audiobody = `
-𝐆𝐮𝐞𝐬𝐬 𝐭𝐡𝐞 𝐚𝐧𝐢𝐦𝐞 𝐜𝐡𝐚𝐫𝐚𝐜𝐭𝐞𝐫!!
-𝐓𝐫𝐚𝐢𝐭𝐬: ${traits}
-𝐓𝐚𝐠𝐬: ${tags}
-`;
+      const quizPrompt = `
+✨ 𝗚𝘂𝗲𝘀𝘀 𝘁𝗵𝗲 𝗮𝗻𝗶𝗺𝗲 𝗰𝗵𝗮𝗿𝗮𝗰𝘁𝗲𝗿! ✨
+📝 𝗧𝗿𝗮𝗶𝘁𝘀: ${traits}
+🏷️ 𝗧𝗮𝗴𝘀: ${tags}
+      `;
 
-      const replyMessage = { body: audiobody, attachment: imageStream };
-      const sentMessage = await message.reply(replyMessage);
+      const replyMsg = { body: quizPrompt.trim(), attachment: imageStream };
+      const sentMessage = await message.reply(replyMsg);
 
       global.GoatBot.onReply.set(sentMessage.messageID, {
         commandName: this.config.name,
         messageID: sentMessage.messageID,
         correctAnswer: [fullName, firstName],
-        senderID: event.senderID 
+        senderID: event.senderID
       });
 
-     
-      setTimeout(async () => {
-        await api.unsendMessage(sentMessage.messageID);
-      }, 15000);
+      setTimeout(() => api.unsendMessage(sentMessage.messageID).catch(() => {}), 15000);
     } catch (error) {
-      console.error("Error:", error);
-      message.reply("An error occurred.");
+      console.error("Error in aniquiz onStart:", error);
+      message.reply("❌ An error occurred while starting the quiz.");
     }
   },
 
   onReply: async function ({ message, event, Reply, api }) {
     try {
-      if (!event || !message || !Reply) return; 
-      const userAnswer = event.body.trim().toLowerCase();
-      const correctAnswers = Reply.correctAnswer.map(name => name.toLowerCase());
+      if (!event || !message || !Reply) return;
 
-     
+      const userAnswer = event.body.trim().toLowerCase();
+      const correctAnswers = Reply.correctAnswer.map(ans => ans.toLowerCase());
+
       if (event.senderID !== Reply.senderID) return;
 
       if (correctAnswers.includes(userAnswer)) {
         await this.addCoins(event.senderID, 1000);
-        await message.reply("🎉🎊 Congratulations! Your answer is correct.\nYou have received 1000 coins.");
+        await message.reply("🎉🎊 Congratulations! Your answer is correct.\nYou earned 1000 coins.");
       } else {
-        await message.reply(`🥺 Oops! Wrong answer.\nThe correct answer was:\n${Reply.correctAnswer.join(" or ")}`);
+        await message.reply(`❌ Sorry! Wrong answer.\nThe correct answer was:\n${Reply.correctAnswer.join(" or ")}`);
       }
 
-      
-      const animeMessageID = Reply.messageID;
-      await api.unsendMessage(animeMessageID);
-
-     
-      await api.unsendMessage(event.messageID);
+      await api.unsendMessage(Reply.messageID).catch(() => {});
+      await api.unsendMessage(event.messageID).catch(() => {});
     } catch (error) {
-      console.error("Error while handling user reply:", error);
+      console.error("Error handling aniquiz reply:", error);
     }
   },
 
   showTopPlayers: async function ({ message, usersData, api }) {
     try {
-      const j = await this.getTopUsers(usersData, api);
-      if (j.length === 0) {
-        return message.reply("No users found.");
-      } else {
-        const topUsersString = j.map((user, index) => `${index + 1}. ${user.username}: ${user.money} coins`).join("\n");
-        return message.reply(`Top 5 pro players:\n${topUsersString}`);
+      const users = await this.getTopUsers(usersData, api);
+      if (users.length === 0) {
+        return message.reply("No players found.");
       }
+
+      const topList = users
+        .map((user, i) => `${i + 1}. ${user.username}: ${user.money} coins`)
+        .join("\n");
+
+      return message.reply(`🏆 Top 5 Anime Quiz Players 🏆\n${topList}`);
     } catch (error) {
-      console.error("Error while showing top players:", error);
-      message.reply("An error occurred.");
+      console.error("Error showing top players:", error);
+      message.reply("❌ An error occurred while fetching top players.");
     }
   },
 
   fetchCharacterData: async function () {
     try {
-      const k = await a.get('https://animequiz-mu.vercel.app/kshitiz');
-      return k;
+      return await axios.get("https://animequiz-mu.vercel.app/kshitiz");
     } catch (error) {
       console.error("Error fetching anime character data:", error);
       return null;
     }
   },
 
-  downloadImage: async function (imageUrl) {
+  downloadImage: async function (url) {
     try {
-      const l = `anime_character.jpg`;
-      const m = c.join(e, l);
+      await fs.ensureDir(cacheDir);
+      const filePath = path.join(cacheDir, "anime_character.jpg");
 
-      const n = await a.get(imageUrl, { responseType: 'arraybuffer' });
-      if (!n.data || n.data.length === 0) {
-        console.error("Empty image data received from the API.");
-        return null;
-      }
+      const res = await axios.get(url, { responseType: "arraybuffer" });
+      if (!res.data || res.data.length === 0) return null;
 
-      await b.ensureDir(e); 
-      await b.writeFile(m, n.data, 'binary');
-
-      return b.createReadStream(m);
+      await fs.writeFile(filePath, res.data, "binary");
+      return fs.createReadStream(filePath);
     } catch (error) {
       console.error("Error downloading image:", error);
       return null;
     }
   },
 
-  addCoins: async function (o, amount) {
-    let p = await this.q(o);
-    if (!p) {
-      p = { money: 0 };
-    }
-    p.money += amount;
-    await this.r(o, p);
+  addCoins: async function (userId, amount) {
+    let userData = await this.readUserData(userId);
+    if (!userData) userData = { money: 0 };
+    userData.money += amount;
+    await this.saveUserData(userId, userData);
   },
 
-  q: async function (o) {
+  readUserData: async function (userId) {
     try {
-      const data = await b.readFile(f, 'utf8');
-      const p = JSON.parse(data);
-      return p[o];
+      const data = await fs.readFile(userDataFile, "utf8");
+      const users = JSON.parse(data);
+      return users[userId] || null;
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        await b.writeFile(f, '{}');
+      if (error.code === "ENOENT") {
+        await fs.writeFile(userDataFile, "{}");
         return null;
       } else {
         console.error("Error reading user data:", error);
@@ -169,21 +199,19 @@ module.exports = {
     }
   },
 
-  r: async function (o, data) {
+  saveUserData: async function (userId, data) {
     try {
-      const p = await this.q(o) || {};
-      const q = { ...p, ...data };
-      const r = await this.s();
-      r[o] = q;
-      await b.writeFile(f, JSON.stringify(r, null, 2), 'utf8');
+      const users = await this.getAllUserData();
+      users[userId] = { ...users[userId], ...data };
+      await fs.writeFile(userDataFile, JSON.stringify(users, null, 2), "utf8");
     } catch (error) {
       console.error("Error saving user data:", error);
     }
   },
 
-  s: async function () {
+  getAllUserData: async function () {
     try {
-      const data = await b.readFile(f, 'utf8');
+      const data = await fs.readFile(userDataFile, "utf8");
       return JSON.parse(data);
     } catch (error) {
       console.error("Error reading user data:", error);
@@ -193,29 +221,30 @@ module.exports = {
 
   getTopUsers: async function (usersData, api) {
     try {
-      const t = await this.s();
-      const u = Object.keys(t);
-      const v = [];
+      const allUsers = await this.getAllUserData();
+      const userIds = Object.keys(allUsers);
+      const topUsers = [];
 
-      const w = d.promisify(api.getUserInfo);
+      const getUserInfo = util.promisify(api.getUserInfo);
 
-      await Promise.all(u.map(async (o) => {
-        try {
-          const x = await w(o);
-          const y = x[o].name;
-          if (y) {
-            const z = t[o];
-            v.push({ username: y, money: z.money });
+      await Promise.all(
+        userIds.map(async (id) => {
+          try {
+            const userInfo = await getUserInfo(id);
+            const username = userInfo[id]?.name;
+            if (username) {
+              topUsers.push({ username, money: allUsers[id].money });
+            }
+          } catch {
+            // Ignore errors
           }
-        } catch (error) {
-          console.error("Failed to retrieve user information:", error);
-        }
-      }));
+        })
+      );
 
-      v.sort((a, b) => b.money - a.money);
-      return v.slice(0, 5); 
+      topUsers.sort((a, b) => b.money - a.money);
+      return topUsers.slice(0, 5);
     } catch (error) {
-      console.error("Error getting top users:", error);
+      console.error("Error fetching top users:", error);
       return [];
     }
   }
