@@ -4,61 +4,68 @@ module.exports = {
 	config: {
 		name: "activemember",
 		aliases: ["am"],
-		version: "1.0",
-		author: "kshitiz",
+		version: "1.2",
+		author: "kshitiz & premium look by Raihan Fiba",
 		countDown: 5,
 		role: 0,
-		shortDescription: "Get the top 15 users by message count in the current chat",
-		longDescription: "Get the top 15 users by message count in the current chat",
+		shortDescription: "Top active members",
+		longDescription: "Show the top 15 most active users in the current chat based on message count.",
 		category: "fun",
 		guide: "{p}{n}",
 	},
 	onStart: async function ({ api, event }) {
-		const threadId = event.threadID; 
-		const senderId = event.senderID; 
+		const threadId = event.threadID;
 
 		try {
-
 			const participants = await api.getThreadInfo(threadId, { participantIDs: true });
 
-
 			const messageCounts = {};
-
-
-			participants.participantIDs.forEach(participantId => {
-				messageCounts[participantId] = 0;
+			participants.participantIDs.forEach(id => {
+				messageCounts[id] = 0;
 			});
 
+			const messages = await api.getThreadHistory(threadId, 1000);
 
-			const messages = await api.getThreadHistory(threadId, 1000); // Adjust the limit as needed if you want if you wanna get all message
-
-
-			messages.forEach(message => {
-				const messageSender = message.senderID;
-				if (messageCounts[messageSender] !== undefined) {
-					messageCounts[messageSender]++;
+			messages.forEach(msg => {
+				if (messageCounts[msg.senderID] !== undefined) {
+					messageCounts[msg.senderID]++;
 				}
 			});
-
 
 			const topUsers = Object.entries(messageCounts)
 				.sort((a, b) => b[1] - a[1])
 				.slice(0, 15);
 
+			let rank = 1;
+			let userList = [];
 
-			const userList = [];
-			for (const [userId, messageCount] of topUsers) {
+			for (const [userId, count] of topUsers) {
 				const userInfo = await api.getUserInfo(userId);
-				const userName = userInfo[userId].name;
-				userList.push(`╔═══════════╗\n『${userName}』 \nSent ${messageCount} messages \n╚═══════════╝`);
+				const name = userInfo[userId].name;
+
+				let medal = "";
+				if (rank === 1) medal = "🥇";
+				else if (rank === 2) medal = "🥈";
+				else if (rank === 3) medal = "🥉";
+
+				userList.push(
+					`${medal} 𝗥𝗮𝗻𝗸 #${rank}\n👤 𝗡𝗮𝗺𝗲: ${name}\n💬 𝗠𝗲𝘀𝘀𝗮𝗴𝗲𝘀: ${count}\n${rank === topUsers.length ? "" : "━━━━━━━━━━━━━━"}`
+				);
+				rank++;
 			}
 
+			const messageText = 
+`🌟 𝗧𝗢𝗣 𝟭𝟱 𝗔𝗖𝗧𝗜𝗩𝗘 𝗠𝗘𝗠𝗕𝗘𝗥𝗦 🌟
 
-			const messageText = `𝗕𝗲𝗿𝗼𝗷𝗴𝗮𝗿 𝗺𝗮𝗻𝘅𝗲𝘆 𝗵𝗲𝗿𝘂 💁‍♀️:\n${userList.join('\n')}`;
-			api.sendMessage({ body: messageText, mentions: [{ tag: senderId, id: senderId, type: "user" }] }, threadId);
+${userList.join("\n")}
+
+🏆 Keep chatting to climb the leaderboard!`;
+
+			api.sendMessage(messageText, threadId);
 
 		} catch (error) {
 			console.error(error);
+			api.sendMessage("❌ An error occurred while fetching active members.", threadId);
 		}
 	},
 };
