@@ -4,9 +4,9 @@ const moment = require("moment-timezone");
 
 module.exports = {
 config: {
-name: "Tamim",
+name: "owner",
 version: "3.9",
-author: "Tamim",
+author: "Raihan",
 category: "owner",
 guide: {
 en: "Use !owner or type Hinata Admin. Type Hinata add support gc / Hinata add main gc to join GC."
@@ -20,7 +20,7 @@ gender: "𝙼𝚊𝚕𝚎",
 bio: " 🌷",
 nick: "Tʌɱɩɱ",
 hobby: "gaming",
-from: "Mohakhali,Dhaka-1212",
+from: "from mohakhali,dhaka-1212",
 age: "Error 🙂",
 status: "Student"
 };
@@ -30,7 +30,7 @@ const botUptime = (() => {
   const d = Math.floor(sec / (3600 * 24));  
   const h = Math.floor((sec % (3600 * 24)) / 3600);  
   const m = Math.floor((sec % 3600) / 60);  
-  return ${d}d ${h}h ${m}m;  
+  return `${d}d ${h}h ${m}m`;  
 })();  
 
 const now = moment().tz("Asia/Dhaka").format("h:mm A • dddd");  
@@ -75,7 +75,7 @@ const body = `
 `;
 
 try {  
-  const videoPath = ${__dirname}/cache/owner.mp4;  
+  const videoPath = `${__dirname}/cache/owner.mp4`;  
   await new Promise((resolve, reject) => {  
     request("https://i.imgur.com/QBzhant.mp4")  
       .pipe(fs.createWriteStream(videoPath))  
@@ -118,7 +118,7 @@ if (msg === "hinata add support gc" || msg === "hinata add main gc") {
 
   try {  
     await api.addUserToGroup(event.senderID, gcTID);  
-    await api.sendMessage🎀 bby check your msgbox join in ${gcName}!`, event.threadID, event.messageID);  
+    await api.sendMessage(`🎀 bby check your msgbox join in ${gcName}!`, event.threadID, event.messageID);  
   } catch (e) {  
     console.error("Add error:", e);  
     await api.sendMessage("🐸🌷 𝙱𝚋𝚢 𝚖𝚊𝚢𝚋𝚎 𝚢𝚘𝚞 𝙰𝚕𝚛𝚎𝚊𝚍𝚢 𝚓𝚘𝚒𝚗𝚎𝚍 𝙲𝚑𝚎𝚌𝚔 𝚢𝚘𝚞𝚛 𝚖𝚎𝚜𝚜𝚊𝚐𝚎𝚜 𝚛𝚎𝚚𝚞𝚎𝚜𝚝 🤍.", event.threadID, event.messageID);  
