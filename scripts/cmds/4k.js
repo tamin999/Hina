@@ -1,54 +1,50 @@
-const fs = require("fs-extra");
 const axios = require("axios");
+const fs = require("fs-extra");
 const path = require("path");
 
 module.exports = {
-  config: {
-    name: "4k",
-    version: "1.1",
-    author: "Raihan Fiba",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Upscale image to 4K",
-    longDescription: "Upscale replied image to 4K quality using Kaiz API",
-    category: "image",
-    guide: {
-      en: "{p}4k (reply to an image)"
-    }
-  },
+config: {
+name: "edit",
+version: "1.0",
+author: "Rifat | nxo_here",
+countDown: 5,
+role: 0,
+shortDescription: { en: "Edit image using prompt" },
+longDescription: { en: "Edit an uploaded image based on your prompt." },
+category: "image",
+guide: { en: "{p}edit [prompt] (reply to image)" }
+},
 
-  onStart: async function({ api, event }) {
-    const { messageReply, threadID, messageID } = event;
+onStart: async function ({ api, event, args, message }) {
+const prompt = args.join(" ");
+const repliedImage = event.messageReply?.attachments?.[0];
 
-    if (!messageReply || !messageReply.attachments || messageReply.attachments.length === 0 || messageReply.attachments[0].type !== "photo") {
-      return api.sendMessage("❌ | Please reply to an image to upscale it to 4K.", threadID, messageID);
-    }
+if (!prompt || !repliedImage || repliedImage.type !== "photo") {
+return message.reply("⚠️ | Please reply to a photo with your prompt to edit it.");
+}
 
-    // Send "Processing..." message first
-    const waitMsg = await api.sendMessage("⏳ | 𝐏𝐥𝐞𝐚𝐬𝐞 𝐰𝐚𝐢𝐭, 𝐩𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠", threadID, messageID);
+const imgPath = path.join(__dirname, "cache", ${Date.now()}_edit.jpg);
+const waitMsg = await message.reply(🧪 Editing image for: "${prompt}"...\nPlease wait...);
 
-    const imgUrl = encodeURIComponent(messageReply.attachments[0].url);
-    const apiUrl = `https://kaiz-apis.gleeze.com/api/upscale?imageUrl=${imgUrl}&apikey=f2ce3b96-a3a7-4693-a19e-3daf4aa64675`;
+try {
+const imgURL = repliedImage.url;
+const imageUrl = https://edit-and-gen.onrender.com/gen?prompt=${encodeURIComponent(prompt)}&image=${encodeURIComponent(imgURL)};
+const res = await axios.get(imageUrl, { responseType: "arraybuffer" });
 
-    const tmpPath = path.join(__dirname, "cache", `${Date.now()}_4k.jpg`);
+await fs.ensureDir(path.dirname(imgPath));
+await fs.writeFile(imgPath, Buffer.from(res.data, "binary"));
 
-    try {
-      const response = await axios.get(apiUrl, { responseType: "stream" });
+await message.reply({
+body: ✅ | Edited image for: "${prompt}",
+attachment: fs.createReadStream(imgPath)
+});
 
-      response.data.pipe(fs.createWriteStream(tmpPath)).on("finish", async () => {
-        // Delete the wait message
-        await api.unsendMessage(waitMsg.messageID);
-
-        // Send the upscaled image
-        api.sendMessage({
-          body: "✅ | Here is your 4K upscaled image.",
-          attachment: fs.createReadStream(tmpPath)
-        }, threadID, () => fs.unlinkSync(tmpPath));
-      });
-    } catch (e) {
-      console.error(e);
-      await api.unsendMessage(waitMsg.messageID);
-      api.sendMessage("❌ | Failed to upscale the image. Please try again later.", threadID, messageID);
-    }
-  }
+} catch (err) {
+console.error("EDIT Error:", err);
+message.reply("❌ | Failed to edit image. Please try again later.");
+} finally {
+await fs.remove(imgPath);
+api.unsendMessage(waitMsg.messageID);
+}
+}
 };
