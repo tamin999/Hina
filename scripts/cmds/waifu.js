@@ -1,4 +1,4 @@
-!cmd install waifu.js const axios = require('axios');
+const axios = require('axios');
 
 module.exports = {
 	config: {
@@ -12,7 +12,7 @@ module.exports = {
 		longDescription: "Get waifu neko: waifu, neko, shinobu, megumin, bully, cuddle, cry, kiss, lick, hug, awoo, pat, smug, bonk, yeet, blush, smile, wave, highfive, handhold, nom, bite, glomp, slap, kill, kick, happy, wink, poke, dance, cringe",
 		category: "anime",
 		guide: "{pn} {{<name>}}"
-	},
+	}
 
 	onStart: async function ({ message, args }) {
 		const name = args.join(" ");
