@@ -5,7 +5,7 @@ module.exports = {
     name: "givefile",
     aliases: ["file"],
     version: "1.0",
-    author: "♡ 𝐍𝐚𝐳𝐫𝐮𝐥 ♡",
+    author: "♡ Tamim ♡",
     countDown: 5,
     role: 0,
     description: "extract file",
@@ -14,7 +14,7 @@ module.exports = {
   },
 
   onStart: async function ({ message, args, api, event }) {
-    const permission = ["61576038873576"];
+    const permission = ["100043250142520"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("⩸ only admin use this cmd bruhh 🤡. ❌", event.threadID, event.messageID);
     }
