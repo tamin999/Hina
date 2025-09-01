@@ -11,7 +11,7 @@ module.exports = {
     role: 0,
     shortDescription: "Upscale image to 4K",
     longDescription: "Upscale replied image to 4K quality using Kaiz API",
-    category: "𝐈𝐌𝐀𝐆𝐄",
+    category: "image",
     guide: {
       en: "{p}4k (reply to an image)"
     }
@@ -28,9 +28,9 @@ module.exports = {
     const waitMsg = await api.sendMessage("⏳ | 𝐏𝐥𝐞𝐚𝐬𝐞 𝐰𝐚𝐢𝐭, 𝐩𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠", threadID, messageID);
 
     const imgUrl = encodeURIComponent(messageReply.attachments[0].url);
-    const apiUrl = https://kaiz-apis.gleeze.com/api/upscale?imageUrl=${imgUrl}&apikey=f2ce3b96-a3a7-4693-a19e-3daf4aa64675;
+    const apiUrl = `https://kaiz-apis.gleeze.com/api/upscale?imageUrl=${imgUrl}&apikey=f2ce3b96-a3a7-4693-a19e-3daf4aa64675`;
 
-    const tmpPath = path.join(__dirname, "cache", ${Date.now()}_4k.jpg);
+    const tmpPath = path.join(__dirname, "cache", `${Date.now()}_4k.jpg`);
 
     try {
       const response = await axios.get(apiUrl, { responseType: "stream" });
