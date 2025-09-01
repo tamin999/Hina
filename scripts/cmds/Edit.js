@@ -6,7 +6,7 @@ module.exports = {
 config: {
 name: "edit",
 version: "1.0",
-author: "Rifat | nxo_here",
+author: "",
 countDown: 5,
 role: 0,
 shortDescription: { en: "Edit image using prompt" },
@@ -23,19 +23,19 @@ if (!prompt || !repliedImage || repliedImage.type !== "photo") {
 return message.reply("⚠️ | Please reply to a photo with your prompt to edit it.");
 }
 
-const imgPath = path.join(__dirname, "cache", ${Date.now()}_edit.jpg);
-const waitMsg = await message.reply(🧪 Editing image for: "${prompt}"...\nPlease wait...);
+const imgPath = path.join(__dirname, "cache", `${Date.now()}_edit.jpg`);
+const waitMsg = await message.reply(`🧪 Editing image for: "${prompt}"...\nPlease wait...`);
 
 try {
 const imgURL = repliedImage.url;
-const imageUrl = https://edit-and-gen.onrender.com/gen?prompt=${encodeURIComponent(prompt)}&image=${encodeURIComponent(imgURL)};
+const imageUrl = `https://edit-and-gen.onrender.com/gen?prompt=${encodeURIComponent(prompt)}&image=${encodeURIComponent(imgURL)}`;
 const res = await axios.get(imageUrl, { responseType: "arraybuffer" });
 
 await fs.ensureDir(path.dirname(imgPath));
 await fs.writeFile(imgPath, Buffer.from(res.data, "binary"));
 
 await message.reply({
-body: ✅ | Edited image for: "${prompt}",
+body: `✅ | Edited image for: "${prompt}"`,
 attachment: fs.createReadStream(imgPath)
 });
 
