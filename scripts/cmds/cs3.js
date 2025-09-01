@@ -124,6 +124,4 @@ const  { status }  = Reply.cmdName[reply - 1]
       "❌ | Failed to retrieve the command URL.",
       event.threadID,
       event.messageID
-    );
-  }
-            }
+      }
