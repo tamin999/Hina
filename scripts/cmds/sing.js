@@ -2,7 +2,7 @@ const axios = require("axios");
 const fs = require('fs')
 const baseApiUrl = async () => {
   const base = await axios.get(
-https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json,
+`https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json`,
   );
   return base.data.api;
 };
@@ -31,7 +31,7 @@ if (urlYtb) {
   const match = args[0].match(checkurl);
   videoID = match ? match[1] : null;
         const { data: { title, downloadLink } } = await axios.get(
-          ${await baseApiUrl()}/ytDl3?link=${videoID}&format=mp3
+          `${await baseApiUrl()}/ytDl3?link=${videoID}&format=mp3`
         );
     return  api.sendMessage({
       body: title,
@@ -43,7 +43,7 @@ if (urlYtb) {
     const maxResults = 6;
     let result;
     try {
-      result = ((await axios.get(${await baseApiUrl()}/ytFullSearch?songName=${keyWord})).data).slice(0, maxResults);
+      result = ((await axios.get(`${await baseApiUrl()}/ytFullSearch?songName=${keyWord}`)).data).slice(0, maxResults);
     } catch (err) {
       return api.sendMessage("❌ An error occurred:"+err.message,event.threadID,event.messageID);
     }
@@ -54,7 +54,7 @@ if (urlYtb) {
     const thumbnails = [];
     for (const info of result) {
 thumbnails.push(diptoSt(info.thumbnail,'photo.jpg'));
-      msg += ${i++}. ${info.title}\nTime: ${info.time}\nChannel: ${info.channel.name}\n\n;
+      msg += `${i++}. ${info.title}\nTime: ${info.time}\nChannel: ${info.channel.name}\n\n`;
     }
     api.sendMessage({
       body: msg+ "Reply to this message with a number want to listen",
@@ -75,10 +75,10 @@ global.GoatBot.onReply.set(info.messageID, {
     if (!isNaN(choice) && choice <= result.length && choice > 0) {
       const infoChoice = result[choice - 1];
       const idvideo = infoChoice.id;
-  const { data: { title, downloadLink ,quality} } = await axios.get(${await baseApiUrl()}/ytDl3?link=${idvideo}&format=mp3);
+  const { data: { title, downloadLink ,quality} } = await axios.get(`${await baseApiUrl()}/ytDl3?link=${idvideo}&format=mp3`);
     await api.unsendMessage(Reply.messageID)
         await  api.sendMessage({
-          body: • Title: ${title}\n• Quality: ${quality},
+          body: `• Title: ${title}\n• Quality: ${quality}`,
           attachment: await dipto(downloadLink,'audio.mp3')
         },event.threadID ,
        ()=>fs.unlinkSync('audio.mp3')
