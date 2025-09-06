@@ -1,69 +1,98 @@
+async function checkShortCut(nickname, uid, usersData) {
+	try {
+		/\{userName\}/gi.test(nickname) ? nickname = nickname.replace(/\{userName\}/gi, await usersData.getName(uid)) : null;
+		/\{userID\}/gi.test(nickname) ? nickname = nickname.replace(/\{userID\}/gi, uid) : null;
+		return nickname;
+	}
+	catch (e) {
+		return nickname;
+	}
+}
+
 module.exports = {
-  config: {
-    name: "setnn",
-    aliases: ["setnick", "changenick"],
-    version: "2.2",
-    author: "StarBoy",
-    description: "Change nickname(s) of mentioned/replied users (GC admins & bot owners only, bot must be admin)",
-    usage: "Reply: setnn NewNick\nMention multiple: setnn @user1 Nick1 @user2 Nick2",
-    cooldown: 5,
-    permissions: [],
-  },
+	config: {
+		name: "setname",
+		version: "1.5",
+		author: "NTKhang",
+		countDown: 5,
+		role: 0,
+		description: {
+			vi: "Đổi biệt danh của tất cả thành viên trong nhóm chat hoặc những thành viên được tag theo một định dạng",
+			en: "Change nickname of all members in chat or members tagged by a format"
+		},
+		category: "box chat",
+		guide: {
+			vi: {
+				body: "   {pn} <nick name>: thay đổi biệt danh của bản thân"
+					+ "\n   {pn} @tags <nick name>: thay đổi biệt danh của những thành viên được tag"
+					+ "\n   {pn} all <nick name>: thay đổi biệt danh của tất cả thành viên trong nhóm chat"
+					+ "\n\n   Với các shortcut có sẵn:"
+					+ "\n   + {userName}: tên của thành viên"
+					+ "\n   + {userID}: ID của thành viên"
+					+ "\n\n   Ví dụ: (xem ảnh)",
+				attachment: {
+					[`${__dirname}/assets/guide/setname_1.png`]: "https://i.ibb.co/gFh23zb/guide1.png",
+					[`${__dirname}/assets/guide/setname_2.png`]: "https://i.ibb.co/BNWHKgj/guide2.png"
+				}
+			},
+			en: {
+				body: "   {pn} <nick name>: change nickname of yourself"
+					+ "\n   {pn} @tags <nick name>: change nickname of members tagged"
+					+ "\n   {pn} all <nick name>: change nickname of all members in chat"
+					+ "\n\nWith available shortcuts:"
+					+ "\n   + {userName}: name of member"
+					+ "\n   + {userID}: ID of member"
+					+ "\n\n   Example: (see image)",
+				attachment: {
+					[`${__dirname}/assets/guide/setname_1.png`]: "https://i.ibb.co/gFh23zb/guide1.png",
+					[`${__dirname}/assets/guide/setname_2.png`]: "https://i.ibb.co/BNWHKgj/guide2.png"
+				}
+			}
+		}
+	},
 
-  onStart: async function ({ api, event, args }) {
-    const { threadID, messageID, mentions, messageReply, senderID } = event;
-    const threadInfo = await api.getThreadInfo(threadID);
-    const adminIDs = threadInfo.adminIDs.map(i => i.id);
-    const botID = api.getCurrentUserID();
-    const botOwners = global.GoatBot?.config?.adminBot || [];
+	langs: {
+		vi: {
+			error: "Đã có lỗi xảy ra, thử tắt tính năng liên kết mời trong nhóm và thử lại sau"
+		},
+		en: {
+			error: "An error has occurred, try turning off the invite link feature in the group and try again later"
+		}
+	},
 
-    // Bot must be admin
-    if (!adminIDs.includes(botID))
-      return api.sendMessage("⛔ The bot must be an admin in this group.", threadID, messageID);
+	onStart: async function ({ args, message, event, api, usersData, getLang }) {
+		const mentions = Object.keys(event.mentions);
+		let uids = [];
+		let nickname = args.join(" ");
 
-    // Only GC admins or bot owners
-    if (!adminIDs.includes(senderID) && !botOwners.includes(senderID))
-      return api.sendMessage("⛔ Only group admins and bot owners can use this command.", threadID, messageID);
+		if (args[0] === "all" || mentions.includes(event.threadID)) {
+			uids = (await api.getThreadInfo(event.threadID)).participantIDs;
+			nickname = args[0] === "all" ? args.slice(1).join(" ") : nickname.replace(event.mentions[event.threadID], "").trim();
+		}
+		else if (mentions.length) {
+			uids = mentions;
+			const allName = new RegExp(
+				Object.values(event.mentions)
+					.map(name => name.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")) // fix error when name has special characters
+					.join("|")
+				, "g"
+			);
+			nickname = nickname.replace(allName, "").trim();
+		}
+		else {
+			uids = [event.senderID];
+			nickname = nickname.trim();
+		}
 
-    // --- Reply case ---
-    if (messageReply && messageReply.senderID) {
-      const nickname = args.join(" ");
-      if (!nickname) return api.sendMessage("❌ Provide a new nickname.", threadID, messageID);
-      try {
-        await api.changeNickname(nickname, threadID, messageReply.senderID);
-        return api.sendMessage(`✅ Nickname changed to "${nickname}" for replied user.`, threadID, messageID);
-      } catch {
-        return api.sendMessage("❌ Failed to change nickname. Make sure the bot has admin permission.", threadID, messageID);
-      }
-    }
+		try {
+			const uid = uids.shift();
+			await api.changeNickname(await checkShortCut(nickname, uid, usersData), event.threadID, uid);
+		}
+		catch (e) {
+			return message.reply(getLang("error"));
+		}
 
-    // --- Mention case ---
-    if (Object.keys(mentions).length > 0) {
-      const mentionIDs = Object.keys(mentions);
-      const mentionNames = Object.values(mentions);
-      let success = [], failed = [];
-      let i = 0;
-
-      while (i < args.length) {
-        if (args[i].startsWith("@")) {
-          const targetID = mentionIDs.shift();
-          const targetName = mentionNames.shift();
-          let nickname = [];
-          i++;
-          while (i < args.length && !args[i].startsWith("@")) nickname.push(args[i++]);
-          nickname = nickname.join(" ");
-          if (!nickname) { failed.push(targetName || "User"); continue; }
-          try { await api.changeNickname(nickname, threadID, targetID); success.push(`${targetName} → "${nickname}"`); }
-          catch { failed.push(targetName || "User"); }
-        } else i++;
-      }
-
-      let msg = "";
-      if (success.length) msg += `✅ Changed:\n${success.join("\n")}\n`;
-      if (failed.length) msg += `❌ Failed:\n${failed.join(", ")}`;
-      return api.sendMessage(msg.trim(), threadID, messageID);
-    }
-
-    return api.sendMessage("❌ Reply to a user or mention them with new nickname(s).", threadID, messageID);
-  }
+		for (const uid of uids)
+			await api.changeNickname(await checkShortCut(nickname, uid, usersData), event.threadID, uid);
+	}
 };
