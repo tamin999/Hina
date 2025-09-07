@@ -14,7 +14,7 @@ module.exports = {
       en: ""
     },
     longDescription: {
-      en: "Chat with Anya forger"
+      en: "Chat with Anya Forger"
     },
     category: "ai",
     guide: {
@@ -28,40 +28,46 @@ module.exports = {
       const { resolve } = path;
       const { threadID, senderID } = event;
 
+      // Get user first name
       const getUserInfo = async (api, userID) => {
         try {
           const userInfo = await api.getUserInfo(userID);
           return userInfo[userID]?.firstName || "";
         } catch (error) {
-          console.error(`Error fetching user info: ${error}`);
+          console.error(Error fetching user info: ${error});
           return "";
         }
       };
 
       const [a, b] = ["Konichiwa", "senpai"];
-
       const k = await getUserInfo(api, senderID);
-      const ranGreet = `${a} ${k} ${b}`;
+      const ranGreet = ${a} ${k} ${b};
 
       const chat = args.join(" ");
 
-      if (!args[0]) return message.reply(ranGreet);
+      if (!args[0]) {
+        return message.reply(ranGreet);
+      }
 
       // Translate to Japanese
       const tranChat = await axios.get(
-        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ja&dt=t&q=${encodeURIComponent(chat)}`
+        https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ja&dt=t&q=${encodeURIComponent(chat)}
       );
 
       const l = tranChat.data[0][0][0]; // Translated text
-
-      const m = resolve(__dirname, "cache", `${threadID}_${senderID}.wav`);
+      const m = resolve(__dirname, "cache", ${threadID}_${senderID}.wav);
 
       // Call Voicevox API
       const n = await axios.get(
-        `https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(l)}&speaker=3`
+        https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(l)}&speaker=3
       );
 
       const o = n.data.mp3StreamingUrl;
+
+      // Make sure global.utils.downloadFile exists
+      if (typeof global.utils.downloadFile !== "function") {
+        throw new Error("global.utils.downloadFile is not defined");
+      }
 
       await global.utils.downloadFile(o, m);
 
