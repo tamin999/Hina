@@ -5,6 +5,8 @@ const path = require("path");
 const imgUrl = "https://i.imgur.com/5euxmJE.jpeg";
 const imgPath = path.join(__dirname, "cache", "intro.jpg");
 
+fs.ensureDirSync(path.dirname(imgPath));
+
 const introCaptions = [
   "তুই কেডা?",
   "পরিচয় দে!",
@@ -22,11 +24,11 @@ async function downloadImage(url, dest) {
   const file = fs.createWriteStream(dest);
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
-      if (res.statusCode !== 200) return reject(new Error(Failed to get ${url}, status: ${res.statusCode}));
+      if (res.statusCode !== 200) return reject(new Error(`Failed to get ${url}, status: ${res.statusCode}`));
       res.pipe(file);
       file.on("finish", () => file.close(resolve));
     }).on("error", (err) => {
-      fs.unlink(dest, () => reject(err)); // remove partially downloaded file
+      fs.unlink(dest, () => reject(err));
     });
   });
 }
@@ -36,7 +38,7 @@ module.exports = {
     name: "intro",
     aliases: [],
     version: "1.2",
-    author: "°Azad°",
+    author: "Azad",
     countDown: 2,
     role: 0,
     shortDescription: { en: "Send intro image (no prefix)" },
@@ -53,27 +55,27 @@ module.exports = {
     const body = event.body?.toLowerCase().trim();
     if (!body || !/^intro(\s|$)/.test(body)) return;
 
-    // Ensure image exists
     if (!fs.existsSync(imgPath)) await downloadImage(imgUrl, imgPath);
 
-    // Select random caption
     const caption = introCaptions[Math.floor(Math.random() * introCaptions.length)];
-    let finalCaption = 🧸 ${caption};
+    let finalCaption = `🧸 ${caption}`;
     const mentions = [];
 
-    // Mention via @tag
     if (event.mentions && Object.keys(event.mentions).length > 0) {
       for (const [uid, name] of Object.entries(event.mentions)) {
-        finalCaption +=  ${name};
+        finalCaption += ` ${name}`;
         mentions.push({ tag: name, id: uid });
       }
-    }
-    // Mention via reply
-    else if (event.type === "message_reply" && event.messageReply?.senderID) {
+    } else if (event.type === "message_reply" && event.messageReply?.senderID) {
       const uid = event.messageReply.senderID;
-      const userInfo = await api.getUserInfo(uid);
-      const name = userInfo?.[uid]?.name || "Unknown";
-      finalCaption +=  ${name};
+      let name = "Unknown";
+      try {
+        const userInfo = await api.getUserInfo(uid);
+        name = userInfo?.[uid]?.name || "Unknown";
+      } catch (e) {
+        console.error("Failed to fetch user info:", e.message);
+      }
+      finalCaption += ` ${name}`;
       mentions.push({ tag: name, id: uid });
     }
 
