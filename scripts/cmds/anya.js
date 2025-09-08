@@ -28,7 +28,7 @@ module.exports = {
       const { resolve } = path;
       const { threadID, senderID } = event;
 
-      // Get user first name
+      // Get user's first name
       const getUserInfo = async (api, userID) => {
         try {
           const userInfo = await api.getUserInfo(userID);
@@ -39,51 +39,52 @@ module.exports = {
         }
       };
 
-      const [a, b] = ["Konichiwa", "senpai"];
-      const k = await getUserInfo(api, senderID);
-      const ranGreet = ${a} ${k} ${b};
+      const greetingStart = "Konichiwa";
+      const greetingEnd = "senpai";
+      const userFirstName = await getUserInfo(api, senderID);
+      const greetingMessage = ${greetingStart} ${userFirstName} ${greetingEnd};
 
       const chat = args.join(" ");
 
       if (!args[0]) {
-        return message.reply(ranGreet);
+        return message.reply(greetingMessage);
       }
 
-      // Translate to Japanese
+      // Translate to Japanese using Google Translate API
       const tranChat = await axios.get(
         https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ja&dt=t&q=${encodeURIComponent(chat)}
       );
 
-      const l = tranChat.data[0][0][0]; // Translated text
-      const m = resolve(__dirname, "cache", ${threadID}_${senderID}.wav);
+      const translatedText = tranChat.data[0][0][0]; // Translated text
+      const audioPath = resolve(__dirname, "cache", ${threadID}_${senderID}.wav);
 
-      // Call Voicevox API
-      const n = await axios.get(
-        https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(l)}&speaker=3
+      // Call Voicevox API for TTS
+      const voiceRes = await axios.get(
+        https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(translatedText)}&speaker=3
       );
 
-      const o = n.data.mp3StreamingUrl;
+      const audioUrl = voiceRes.data.mp3StreamingUrl;
 
-      // Make sure global.utils.downloadFile exists
+      // Check for download function
       if (typeof global.utils.downloadFile !== "function") {
         throw new Error("global.utils.downloadFile is not defined");
       }
 
-      await global.utils.downloadFile(o, m);
+      await global.utils.downloadFile(audioUrl, audioPath);
 
-      const p = createReadStream(m);
+      const audioStream = createReadStream(audioPath);
 
       message.reply(
         {
-          body: l,
-          attachment: p
+          body: translatedText,
+          attachment: audioStream
         },
         threadID,
-        () => unlinkSync(m)
+        () => unlinkSync(audioPath)
       );
     } catch (error) {
       console.error(error);
-      message.reply("error");
+      message.reply("An error occurred while processing your request.");
     }
   }
 };
