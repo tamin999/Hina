@@ -8,83 +8,90 @@ module.exports = {
     aliases: [],
     author: "kshitiz",
     version: "2.0",
-    cooldowns: 5,
     role: 0,
     shortDescription: {
-      en: ""
+      en: "Chat with Anya"
     },
     longDescription: {
-      en: "Chat with Anya Forger"
+      en: "Talk to Anya Forger without prefix"
     },
     category: "ai",
     guide: {
-      en: "{p}{n} [text]"
+      en: "Just type: anya [text]"
     }
   },
 
-  onStart: async function ({ api, event, args, message }) {
+  // Dummy onStart (required by your framework)
+  onStart: async function () {
+    return;
+  },
+
+  // Real noprefix handler
+  onChat: async function ({ api, event, message }) {
     try {
       const { createReadStream, unlinkSync } = fs;
       const { resolve } = path;
-      const { threadID, senderID } = event;
+      const { threadID, senderID, body } = event;
 
-      // Get user's first name
+      if (!body) return;
+
+      // Only trigger if message starts with "anya"
+      if (!body.toLowerCase().startsWith("anya")) return;
+
       const getUserInfo = async (api, userID) => {
         try {
           const userInfo = await api.getUserInfo(userID);
           return userInfo[userID]?.firstName || "";
-        } catch (error) {
-          console.error(Error fetching user info: ${error});
+        } catch {
           return "";
         }
       };
 
-      const greetingStart = "Konichiwa";
-      const greetingEnd = "senpai";
-      const userFirstName = await getUserInfo(api, senderID);
-      const greetingMessage = ${greetingStart} ${userFirstName} ${greetingEnd};
+      const [a, b] = ["Konichiwa", "senpai"];
+      const k = await getUserInfo(api, senderID);
+      const ranGreet = `${a} ${k} ${b}`;
 
-      const chat = args.join(" ");
+      // Remove "anya" from message
+      const chat = body.slice(4).trim();
 
-      if (!args[0]) {
-        return message.reply(greetingMessage);
+      if (!chat) {
+        return message.reply(ranGreet);
       }
 
-      // Translate to Japanese using Google Translate API
+      // Translate to Japanese
       const tranChat = await axios.get(
-        https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ja&dt=t&q=${encodeURIComponent(chat)}
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ja&dt=t&q=${encodeURIComponent(chat)}`
       );
 
-      const translatedText = tranChat.data[0][0][0]; // Translated text
-      const audioPath = resolve(__dirname, "cache", ${threadID}_${senderID}.wav);
+      const l = tranChat.data[0][0][0]; // Translated text
+      const m = resolve(__dirname, "cache", `${threadID}_${senderID}.wav`);
 
-      // Call Voicevox API for TTS
-      const voiceRes = await axios.get(
-        https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(translatedText)}&speaker=3
+      // Call Voicevox API
+      const n = await axios.get(
+        `https://api.tts.quest/v3/voicevox/synthesis?text=${encodeURIComponent(l)}&speaker=3`
       );
 
-      const audioUrl = voiceRes.data.mp3StreamingUrl;
+      const o = n.data.mp3StreamingUrl;
 
-      // Check for download function
       if (typeof global.utils.downloadFile !== "function") {
         throw new Error("global.utils.downloadFile is not defined");
       }
 
-      await global.utils.downloadFile(audioUrl, audioPath);
+      await global.utils.downloadFile(o, m);
 
-      const audioStream = createReadStream(audioPath);
+      const p = createReadStream(m);
 
       message.reply(
         {
-          body: translatedText,
-          attachment: audioStream
+          body: l,
+          attachment: p
         },
         threadID,
-        () => unlinkSync(audioPath)
+        () => unlinkSync(m)
       );
     } catch (error) {
       console.error(error);
-      message.reply("An error occurred while processing your request.");
+      message.reply("error");
     }
   }
 };
