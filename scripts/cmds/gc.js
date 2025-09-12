@@ -7,7 +7,9 @@ module.exports = {
     countDown: 5,
     role: 0,
     guide: {
-      en: `<text> ++ <text> | reply | --user <uid> | --theme <theme number> | --attachment <image url> |  blank
+      en: `
+<text> ++ <text> | reply | --user <uid> | --theme <theme number> | --attachment <image url> | blank
+
 THEMES:
 0. lo-fi
 1. bubble tea
@@ -15,7 +17,9 @@ THEMES:
 3. lucky pink
 4. default
 5. monochrome
-Adding more themes soon`
+
+(Adding more themes soon)
+`
     }
   },
 
@@ -66,19 +70,23 @@ Adding more themes soon`
       replyImage = prompt.split("--attachment ")[1].split(" ")[0];
     }
 
-    prompt = prompt.split("--")[0]; // Remove any options from the prompt
+    // Clean the text (remove options)
+    prompt = prompt.split("--")[0];
     message.reaction("⏳", event.messageID);
 
-    // Set theme
+    // Set theme (default = 4)
     let themeID = 4;
     if (prompt.includes("--theme")) {
       themeID = prompt.split("--theme ")[1].split(" ")[0];
     }
 
     try {
-      let url = https://tawsifz-fakechat.onrender.com/image?theme=${themeID}&name=${encodeURIComponent(name)}&avatar=${encodeURIComponent(avatarUrl)}&text=${encodeURIComponent(prompt)};
+      let url = `https://tawsifz-fakechat.onrender.com/image?theme=${themeID}&name=${encodeURIComponent(
+        name
+      )}&avatar=${encodeURIComponent(avatarUrl)}&text=${encodeURIComponent(prompt)}`;
+
       if (replyImage) {
-        url += &replyImageUrl=${encodeURIComponent(replyImage)};
+        url += `&replyImageUrl=${encodeURIComponent(replyImage)}`;
       }
 
       message.reply({
