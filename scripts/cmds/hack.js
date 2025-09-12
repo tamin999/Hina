@@ -5,9 +5,9 @@ const axios = require("axios");
 module.exports = {
   config: {
     name: "hack",
-    author: "jun",
+    author: "Mostakim",
     countDown: 5,
-    role: 0,
+    role: 2,
     category: "fun",
     shortDescription: {
       en: "Generates a 'hacking' image with the user's profile picture.",
@@ -50,7 +50,7 @@ module.exports = {
     var name = await api.getUserInfo(id);
     name = name[id].name;
     var ThreadInfo = await api.getThreadInfo(event.threadID);
-    var background = ["https://i.imgur.com/tdNwhpF.jpeg"];
+    var background = ["https://drive.google.com/uc?id=1RwJnJTzUmwOmP3N_mZzxtp63wbvt9bLZ"];
     var rd = background[Math.floor(Math.random() * background.length)];
     let getAvtmot = (
       await axios.get(
@@ -70,13 +70,13 @@ module.exports = {
     let canvas = createCanvas(baseImage.width, baseImage.height);
     let ctx = canvas.getContext("2d");
     ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
-    ctx.font = "400 20px Arial";
+    ctx.font = "400 23px Arial";
     ctx.fillStyle = "#1878F3";
     ctx.textAlign = "start";
     const lines = await this.wrapText(ctx, name, 1160);
-    ctx.fillText(lines.join("\n"), 150, 435); //comment
+    ctx.fillText(lines.join("\n"), 200, 497); //comment
     ctx.beginPath();
-    ctx.drawImage(baseAvt1, 70, 393, 70, 71);
+    ctx.drawImage(baseAvt1, 83, 437, 100, 101);
     const imageBuffer = canvas.toBuffer();
     fs.writeFileSync(pathImg, imageBuffer);
     fs.removeSync(pathAvt1);
