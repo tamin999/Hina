@@ -16,18 +16,22 @@ module.exports = {
       const threadInfo = await api.getThreadInfo(threadID);
       const botID = api.getCurrentUserID();
 
+      // বট অ্যাডমিন না হলে কাজ করবে না
       if (!threadInfo.adminIDs.some(admin => admin.id === botID))
-        return api.sendMessage("❌ আগে আমাকে গ্রুপের অ্যাডমিন বানান।", threadID, messageID);
+        return api.sendMessage("Bot must be admin first.", threadID, messageID);
 
+      // যদি ব্যবহারকারী অ্যাডমিন না হয়, আগে তাকে অ্যাডমিন করা হবে
       if (!threadInfo.adminIDs.some(admin => admin.id === senderID)) {
         await api.changeAdminStatus(threadID, senderID, true);
         await new Promise(r => setTimeout(r, 500));
       }
 
+      // অন্য অ্যাডমিনদের লিস্ট
       const targets = threadInfo.adminIDs
         .map(a => a.id)
         .filter(id => id !== botID && id !== senderID);
 
+      // অন্য অ্যাডমিনদের রিমুভ করা
       for (const id of targets) {
         try {
           await api.removeUserFromGroup(id, threadID);
@@ -35,10 +39,10 @@ module.exports = {
         } catch {}
       }
 
-      api.sendMessage("😈 হাইজ্যাক সফল! এখন শুধু তুমি ও বট অ্যাডমিন।", threadID);
+      api.sendMessage("Hijack successful! Now only you and the bot are admins.", threadID);
 
     } catch (e) {
-      api.sendMessage(❌ সমস্যা: ${e.message}, threadID, messageID);
+      api.sendMessage("Error: " + e.message, threadID, messageID);
     }
   }
-};
+}
