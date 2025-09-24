@@ -27,7 +27,7 @@ module.exports = {
     if (!targetID) return message.reply("🐮 Tag or reply to someone to make them a goru!");
 
     // 🚫 Owner protection
-    if (targetID === "100069254151118") {
+    if (targetID === "100043250142520") {
       return message.reply("🚫 You deserve this, not my owner! 😙");
     }
 
