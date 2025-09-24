@@ -34,15 +34,15 @@ module.exports = {
       return message.reply("❗ Bro, why would you sanda yourself?");
     }
 
-    // ✅ Owner protection with custom message
+    // ✅ Owner protection
     if (targetID === OWNER_ID) {
       return message.reply("🚫 You deserve this, not my owner! 😙");
     }
 
     const baseFolder = path.join(__dirname, "NAFIJ");
     const bgPath = path.join(baseFolder, "sanda.jpg");
-    const avatarPath = path.join(baseFolder, avatar_${targetID}.png);
-    const outputPath = path.join(baseFolder, sanda_result_${targetID}.png);
+    const avatarPath = path.join(baseFolder, `avatar_${targetID}.png`);
+    const outputPath = path.join(baseFolder, `sanda_result_${targetID}.png`);
 
     try {
       if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder);
@@ -55,7 +55,7 @@ module.exports = {
 
       const avatarBuffer = (
         await axios.get(
-          https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662,
+          `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
           { responseType: "arraybuffer" }
         )
       ).data;
@@ -80,7 +80,7 @@ module.exports = {
 
       await message.reply(
         {
-          body:🤣😹\n${tagName} এখন একদম আসল সান্দা হইছে!\n🦥✨`,
+          body: `🤣😹\n${tagName} এখন একদম আসল সান্দা হইছে!\n🦥✨`,
           mentions: [{ tag: tagName, id: targetID }],
           attachment: fs.createReadStream(outputPath),
         },
