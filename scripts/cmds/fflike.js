@@ -33,8 +33,9 @@ module.exports = {
       const uid = args[0];
       const region = args[1];
 
+      // ✅ Correct use of template string with backticks
       const res = await axios.get(
-        https://api-like-i699.onrender.com/like?uid=${uid}&region=${region}
+        `https://api-like-i699.onrender.com/like?uid=${uid}&region=${region}`
       );
 
       const msg = res.data;
