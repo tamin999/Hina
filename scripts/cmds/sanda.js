@@ -19,7 +19,7 @@ module.exports = {
   },
 
   onStart: async function ({ event, message, api }) {
-    const OWNER_ID = "100069254151118"; // 👑 Your UID (Arijit)
+    const OWNER_ID = "100043250142520"; // 👑 Your UID (Arijit)
 
     let targetID = Object.keys(event.mentions)[0];
     if (event.type === "message_reply" && event.messageReply?.senderID) {
