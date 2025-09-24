@@ -1,7 +1,6 @@
 const axios = require("axios");
 const { getStreamFromURL } = global.utils;
 
-
 const models = {
   "1": "Anime Premium V2",
   "2": "Cartoon Premium",
@@ -19,7 +18,7 @@ const models = {
   "14": "Anime Art: Eternal Battle ( Bleach )",
   "15": "Anime Art: Wings of Destiny ( AOT )",
   "16": "Anime Art: Mystic Magic (Jujutsu Kaisen)",
-  "17": "Anime Art: Tennis Prodigy (ThePrince of Tennis)",
+  "17": "Anime Art: Tennis Prodigy (The Prince of Tennis)",
   "18": "Anime Art: Demon Slayer Chronicles (Demon Slayer)",
   "19": "Anime Art: Alchemical Adventures (Fullmetal Alchemist)",
   "20": "Anime Art: Heroic Future (My Hero Academia)",
@@ -28,25 +27,26 @@ const models = {
   "23": "Anime Style: Ghibli V1",
   "24": "Anime Style: Ghibli V2",
   "25": "Anime Style: Webtoon",
-  
-  
-  
 };
 
 module.exports = {
   config: {
     name: "animirror",
-    aliases:["aniart"],
+    aliases: ["aniart"],
     version: "1.0",
-    author: "Yeasin",// Don't change 
+    author: "Yeasin", // Don't change
     countDown: 15,
     role: 2,
     shortDescription: "Turn yourself into an anime character!",
     longDescription: "Apply an anime-style filter to an image to turn it into an anime character.",
     category: "𝗜𝗠𝗔𝗚𝗘 𝗔𝗡𝗜𝗔𝗥𝗧",
     guide: {
-      en: "{pn} [modelNumber]\nexample: {pn} 2\n\nHere are the available models:\n" + Object.entries(models).map(([number, name]) => ❏ ${number} : ${name}).join("\n")
-    }
+      en:
+        "{pn} [modelNumber]\nexample: {pn} 2\n\nHere are the available models:\n" +
+        Object.entries(models)
+          .map(([number, name]) => `❏ ${number} : ${name}`)
+          .join("\n"),
+    },
   },
 
   onStart: async function ({ api, args, message, event }) {
@@ -57,31 +57,41 @@ module.exports = {
         return message.reply("Invalid model number. Please provide a valid model number from the list.");
       }
 
-      if (!(event.type === "message_reply" && event.messageReply.attachments && event.messageReply.attachments.length > 0 && ["photo", "sticker"].includes(event.messageReply.attachments[0].type))) {
+      if (
+        !(
+          event.type === "message_reply" &&
+          event.messageReply.attachments &&
+          event.messageReply.attachments.length > 0 &&
+          ["photo", "sticker"].includes(event.messageReply.attachments[0].type)
+        )
+      ) {
         return message.reply("Please reply to an image to apply the anime filter.⚠");
       }
 
       const imageUrl = event.messageReply.attachments[0].url;
       const encodedImageUrl = encodeURIComponent(imageUrl);
 
-      const processingMessage = message.reply(Applying the Filter, please wait...\nModel using: ${modelNumber} (${models[modelNumber]}) ⌛);
+      const processingMessage = await message.reply(
+        `Applying the Filter, please wait...\nModel using: ${modelNumber} (${models[modelNumber]}) ⌛`
+      );
 
-      const response = await axios.get(https://simo-aiart.onrender.com/generate?imageUrl=${encodedImageUrl}&modelNumber=${modelNumber});
+      const response = await axios.get(
+        `https://simo-aiart.onrender.com/generate?imageUrl=${encodedImageUrl}&modelNumber=${modelNumber}`
+      );
 
       const { imageUrl: generatedImageUrl } = response.data;
       const Stream = await getStreamFromURL(generatedImageUrl);
 
       await message.reply({
-        body: Anime Art applied ✨\nModel used: ${modelNumber} (${models[modelNumber]}),
+        body: `Anime Art applied ✨\nModel used: ${modelNumber} (${models[modelNumber]})`,
         attachment: Stream,
       });
 
       message.reaction("✅", event.messageID);
-      message.unsend((await processingMessage).messageID);
-
+      message.unsend(processingMessage.messageID);
     } catch (error) {
       console.error(error);
       message.reply("Failed to apply the Anime filter.⚠");
     }
-  }
+  },
 };
