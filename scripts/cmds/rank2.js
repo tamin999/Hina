@@ -79,7 +79,7 @@ async function drawRankCard(data) {
     ctx.fill();
   }
 
-  // 💠 Glowing border frame (offset 13)
+  // 💠 Glowing border frame
   const offset = 13;
   ctx.save();
   ctx.shadowColor = "#00ffff";
@@ -90,26 +90,26 @@ async function drawRankCard(data) {
   ctx.stroke();
   ctx.restore();
 
-  // 🔷 Avatar hex position
+  // 🔷 Avatar hex
   const centerX = 600, centerY = 160, radius = 100;
 
   // Glow hex layers
   for (let i = 3; i > 0; i--) {
-    drawHex(ctx, centerX, centerY, radius + i * 15, rgba(0,255,255,${0.1 * i}), 4);
+    drawHex(ctx, centerX, centerY, radius + i * 15, `rgba(0,255,255,${0.1 * i})`, 4);
   }
-  drawHex(ctx, centerX, centerY, radius + 4, "rgba(173,216,230,0.😎", 2, true);
+  drawHex(ctx, centerX, centerY, radius + 4, "rgba(173,216,230,0.8)", 2, true);
 
-  // Draw avatar inside clipped hexagon
+  // Avatar
   ctx.save();
   clipHex(ctx, centerX, centerY, radius);
   ctx.drawImage(data.avatar, centerX - radius, centerY - radius, radius * 2, radius * 2);
   ctx.restore();
 
-  // 🧑 Name below avatar (white with dark blue glow)
+  // 🧑 Name
   ctx.font = "bold 44px Arial";
-  ctx.fillStyle = "#ffffff";           // white text
+  ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
-  ctx.shadowColor = "#00008b";         // dark blue glow
+  ctx.shadowColor = "#00008b";
   ctx.shadowBlur = 15;
   ctx.fillText(data.name, W / 2, 320);
 
@@ -121,31 +121,35 @@ async function drawRankCard(data) {
   // Left section
   ctx.fillStyle = "#00ffee";
   [
-   🆔 UID: ${data.uid}`,
-   💬 Nickname: ${data.nickname || data.name}`,
-   🚻 Gender: ${data.gender}`,
-   🌐 Username: ${data.username}`,
-    ⭐ Level: ${data.level}
+    `🆔 UID: ${data.uid}`,
+    `💬 Nickname: ${data.nickname || data.name}`,
+    `🚻 Gender: ${data.gender}`,
+    `🌐 Username: ${data.username}`,
+    `⭐ Level: ${data.level}`
   ].forEach((text, i) => ctx.fillText(text, leftX, topY + i * gap));
 
   // Right section
   const rightX = 700;
   ctx.fillStyle = "#ff99ff";
   [
-    ⚡ EXP: ${data.exp} / ${data.requiredExp},
-   🏆 Rank: #${data.rank}`,
-   💰 Money: ${data.money}`,
-   💸 Money Rank: #${data.moneyRank || "N/A"}`
+    `⚡ EXP: ${data.exp} / ${data.requiredExp}`,
+    `🏆 Rank: #${data.rank}`,
+    `💰 Money: ${data.money}`,
+    `💸 Money Rank: #${data.moneyRank || "N/A"}`
   ].forEach((text, i) => ctx.fillText(text, rightX, topY + i * gap));
 
   // 📅 Footer
   ctx.font = "20px Arial";
   ctx.fillStyle = "#cccccc";
   ctx.textAlign = "center";
-  ctx.fillText🕓 Updated: ${moment().tz("Asia/Dhaka").format("YYYY-MM-DD hh:mm A")}`, W / 2, H - 30);
+  ctx.fillText(
+    `🕓 Updated: ${moment().tz("Asia/Dhaka").format("YYYY-MM-DD hh:mm A")}`,
+    W / 2,
+    H - 30
+  );
 
-  // 📤 Save to file
-  const fileName = rank_${data.uid}_${randomString(6)}.png;
+  // 📤 Save
+  const fileName = `rank_${data.uid}_${randomString(6)}.png`;
   const filePath = path.join(__dirname, "cache", fileName);
   if (!fs.existsSync(path.dirname(filePath))) fs.mkdirSync(path.dirname(filePath));
   fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
@@ -156,7 +160,7 @@ module.exports = {
   config: {
     name: "rank2",
     version: "5.3",
-    author: "Ew'r Saim |with help from fahad",
+    author: "Ew'r Saim | with help from fahad",
     countDown: 5,
     role: 0,
     shortDescription: "Show stylish neon rank card",
@@ -164,7 +168,7 @@ module.exports = {
     guide: "{pn} [@mention or blank for self]"
   },
 
-  onStart: async function ({ api, event, args, usersData, threadsData, message }) {
+  onStart: async function ({ api, event, args, usersData, message }) {
     try {
       const { senderID, mentions, messageReply } = event;
       const uid = Object.keys(mentions)[0] || args[0] || (messageReply?.senderID || senderID);
@@ -218,9 +222,7 @@ module.exports = {
       await message.reply({ attachment: fs.createReadStream(filePath) });
 
       setTimeout(() => {
-        try {
-          fs.unlinkSync(filePath);
-        } catch {}
+        try { fs.unlinkSync(filePath); } catch {}
       }, 30000);
 
     } catch (err) {
