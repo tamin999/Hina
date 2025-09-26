@@ -5,8 +5,8 @@ const path = require("path");
 
 module.exports = {
   config: {
-    name: "nigga", // ✅ renamed
-    aliases: ["burn"],
+    name: "nigga",
+    aliases: ["roast", "burn"],
     version: "1.2",
     author: "nexo_here",
     countDown: 2,
@@ -23,38 +23,20 @@ module.exports = {
       const mention = Object.keys(event.mentions || {});
       const targetUID = mention.length > 0 ? mention[0] : event.senderID;
 
-      // ✅ fixed URL with backticks
-      const url = `https://betadash-api-swordslush-production.up.railway.app/roast?userid=${targetUID}`;
-      const response = await axios.get(url, { responseType: "arraybuffer" });
+      const url = `https://betadash-api-swordslush-production.up.railway.app/nigga?userid=${targetUID}`;
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
 
-      const cacheDir = path.join(__dirname, "cache");
-      if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
-
-      const filePath = path.join(cacheDir, `roast_${targetUID}.jpg`);
+      const filePath = path.join(__dirname, "cache", `roast_${targetUID}.jpg`);
       fs.writeFileSync(filePath, Buffer.from(response.data, "binary"));
 
-      api.sendMessage(
-        {
-          body: "🔥 Here's a roast just for you 😂",
-          attachment: fs.createReadStream(filePath)
-        },
-        event.threadID,
-        () => {
-          try {
-            fs.unlinkSync(filePath);
-          } catch (err) {
-            console.error("Failed to delete cache file:", err.message);
-          }
-        },
-        event.messageID
-      );
+      api.sendMessage({
+        body: `Look I found a nigga 😂`,
+        attachment: fs.createReadStream(filePath)
+      }, event.threadID, () => fs.unlinkSync(filePath), event.messageID);
+
     } catch (e) {
       console.error("Error:", e.message);
-      api.sendMessage(
-        "❌ Couldn't generate roast image. Try again later.",
-        event.threadID,
-        event.messageID
-      );
+      api.sendMessage("❌ Couldn't generate image. Try again later.", event.threadID, event.messageID);
     }
   }
 };
