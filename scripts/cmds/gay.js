@@ -1,49 +1,62 @@
-const fs = require("fs-extra");
-const path = require("path");
-const axios = require("axios");
+
 const DIG = require("discord-image-generation");
+const fs = require("fs-extra");
 
 module.exports = {
   config: {
     name: "gay",
     version: "1.0",
-    author: "Vex_Kshitiz",
-    shortDescription: "gays finder.",
-    category: "fun",
-    guide: "{p}gayfinder",
+    author: "@tas33n",
+    countDown: 1,
+    role: 0,
+    shortDescription: "find gay",
+    longDescription: "",
+    category: "box chat",
+    guide: "{pn} {{[on | off]}}",
+    envConfig: {
+      deltaNext: 5
+    }
   },
 
-  onStart: async function ({ api, event, usersData, message }) {
-    const excludedUserID = "61557052662679";
-    const threadInfo = await api.getThreadInfo(event.threadID);
-        const participantIDs = threadInfo.participantIDs.filter(id => id !== event.senderID && id !== excludedUserID); 
-        const randomIndex = Math.floor(Math.random() * participantIDs.length);
-        const randomUserID = participantIDs[randomIndex];
-        const userInfo = await api.getUserInfo([randomUserID]);
-        const user = userInfo[randomUserID];
-        const avatarUrl = await usersData.getAvatarUrl(randomUserID);
-
-      
-        const gayFilterImage = await applyGayFilter(avatarUrl);
-
-        
-        const imageAttachment = fs.createReadStream(gayFilterImage);
-        message.reply({
-          body: `Look i found a gay: ${user.name}`,
-          attachment: imageAttachment,
-        });
-      },
-    };
-
-    async function applyGayFilter(avatarUrl) {
-      const imageResponse = await axios.get(avatarUrl, { responseType: "arraybuffer" });
-      const image = Buffer.from(imageResponse.data, "binary");
-      const gayFilter = new DIG.Gay();
-      const gayFilterImage = await gayFilter.getImage(image);
-
-   
-      const outputFile = path.join(__dirname, "cache", `gay.png`);
-      fs.writeFileSync(outputFile, gayFilterImage);
-
-      return outputFile;
+  langs: {
+    vi: {
+      noTag: "Bạn phải tag người bạn muốn tát"
+    },
+    en: {
+      noTag: "You must tag the person you want to "
     }
+  },
+
+  onStart: async function ({ event, message, usersData, args, getLang }) {
+
+    let mention = Object.keys(event.mentions);
+    let uid;
+
+    if (event.type == "message_reply") {
+      uid = event.messageReply.senderID;
+    } else {
+      if (mention[0]) {
+        uid = mention[0];
+      } else {
+        uid = event.senderID;
+      }
+    }
+
+    // Prevent the user with ID 100078140834638 from being targeted
+    if (uid === "100078140834638", "100084690500330" ) {
+      return message.reply("Did you check yourself..? 🤏🏻");
+    }
+
+    let url = await usersData.getAvatarUrl(uid);
+    let avt = await new DIG.Gay().getImage(url);
+
+    const pathSave = `${__dirname}/tmp/gay.png`;
+    fs.writeFileSync(pathSave, Buffer.from(avt));
+    let body = "Look... I found a gay";
+    if (!mention[0]) body = "Baka, you're gay\nForgot to reply or mention someone";
+    message.reply({
+      body: body,
+      attachment: fs.createReadStream(pathSave)
+    }, () => fs.unlinkSync(pathSave));
+  }
+};
