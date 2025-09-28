@@ -24,16 +24,16 @@ module.exports = {
     const ownerInfo = {  
       name: "Tʌɱɩɱ Hʌwɭʌdeʀ",  
       gender: "𝙼𝚊𝚕𝚎",  
-      bio: "🌷",  
+      bio: " 🌷",  
       nick: "Tʌɱɩɱ",  
       hobby: "gaming",  
       from: "Dhaka,Bangladesh",  
-      age: ":>",  
+      age: "–",  
       status: "Student"  
     };  
 
     const sec = process.uptime();  
-    const botUptime = `${Math.floor(sec / 86400)}d ${Math.floor((sec % 86400) / 3600)}h ${Math.floor((sec % 3600) / 60)}m`;  
+    const botUptime = `${Math.floor(sec / 86400)}d ${Math.floor(sec % 86400 / 3600)}h ${Math.floor(sec % 3600 / 60)}m`;  
     const now = moment().tz("Asia/Dhaka").format("h:mm A • dddd");  
 
     const body = `
@@ -63,16 +63,10 @@ module.exports = {
 `;
 
     // Image URL  
-    const imageUrl = "https://files.catbox.moe/2fgoyb.jpg";  
-    const cacheDir = path.join(__dirname, "cache");
-    const imagePath = path.join(cacheDir, "owner.jpg");
+    const imageUrl = "https://files.catbox.moe/12n172.jpg";  
+    const imagePath = path.join(__dirname, "cache", "owner.jpg");  
 
-    try {
-      // Make sure cache directory exists
-      if (!fssync.existsSync(cacheDir)) {
-        fssync.mkdirSync(cacheDir);
-      }
-
+    try {  
       // Download image  
       const response = await axios.get(imageUrl, { responseType: "stream" });  
       const writer = response.data.pipe(fssync.createWriteStream(imagePath));  
@@ -94,6 +88,7 @@ module.exports = {
       const msg = await api.sendMessage(body, event.threadID);  
       this.lastOwnerMsgID = msg.messageID;  
     }
+
   },
 
   onChat: async function ({ api, event }) {
