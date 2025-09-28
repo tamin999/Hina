@@ -164,7 +164,7 @@ module.exports = {
     countDown: 5,
     role: 0,
     shortDescription: "Show stylish neon rank card",
-    category: "rank",
+    category: "group",
     guide: "{pn} [@mention or blank for self]"
   },
 
