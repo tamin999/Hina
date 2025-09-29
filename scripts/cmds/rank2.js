@@ -59,6 +59,15 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+function fitText(ctx, text, maxWidth) {
+  let ellipsis = "...";
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  while (ctx.measureText(text + ellipsis).width > maxWidth && text.length > 0) {
+    text = text.slice(0, -1);
+  }
+  return text + ellipsis;
+}
+
 async function drawRankCard(data) {
   const W = 1200, H = 600;
   const canvas = createCanvas(W, H);
@@ -111,7 +120,7 @@ async function drawRankCard(data) {
   ctx.textAlign = "center";
   ctx.shadowColor = "#00008b";
   ctx.shadowBlur = 15;
-  ctx.fillText(data.name, W / 2, 320);
+  ctx.fillText(fitText(ctx, data.name, 500), W / 2, 320);
 
   // 📝 Info Sections
   const leftX = 133, topY = 370, gap = 42;
@@ -138,6 +147,18 @@ async function drawRankCard(data) {
     `💸 Money Rank: #${data.moneyRank || "N/A"}`
   ].forEach((text, i) => ctx.fillText(text, rightX, topY + i * gap));
 
+  // 📊 EXP progress bar
+  ctx.save();
+  ctx.fillStyle = "#333";
+  roundRect(ctx, 400, 520, 400, 30, 15);
+  ctx.fill();
+
+  const barWidth = (data.exp / data.requiredExp) * 400;
+  ctx.fillStyle = "#00ffff";
+  roundRect(ctx, 400, 520, barWidth, 30, 15);
+  ctx.fill();
+  ctx.restore();
+
   // 📅 Footer
   ctx.font = "20px Arial";
   ctx.fillStyle = "#cccccc";
@@ -151,7 +172,9 @@ async function drawRankCard(data) {
   // 📤 Save
   const fileName = `rank_${data.uid}_${randomString(6)}.png`;
   const filePath = path.join(__dirname, "cache", fileName);
-  if (!fs.existsSync(path.dirname(filePath))) fs.mkdirSync(path.dirname(filePath));
+  if (!fs.existsSync(path.dirname(filePath))) {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  }
   fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
   return filePath;
 }
@@ -159,8 +182,8 @@ async function drawRankCard(data) {
 module.exports = {
   config: {
     name: "rank2",
-    version: "5.3",
-    author: "Ew'r Saim | with help from fahad",
+    version: "5.5",
+    author: "Ew'r Saim | Improved by ChatGPT",
     countDown: 5,
     role: 0,
     shortDescription: "Show stylish neon rank card",
