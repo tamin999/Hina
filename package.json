@@ -1,16 +1,15 @@
 {
-  "name": "goat-bot-v2",
+  "name": "Azad",
   "version": "1.5.35",
   "description": "A simple Bot chat messenger using personal account. Made by NTKhang.",
   "main": "index.js",
   "engines": {
-    "node": "16.x",
-    "npm": ">=7.0.0"
+    "node": ">=18.x",
+    "npm": ">=9.0.0"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.13.3",
     "axios": "^1.4.0",
-    "ws": "^8.13.0",
     "bcrypt": "^5.0.1",
     "canvas": "^2.9.1",
     "cheerio": "^1.0.0-rc.12",
@@ -31,12 +30,12 @@
     "mongoose": "^6.3.1",
     "mqtt": "^4.3.7",
     "node-cron": "^3.0.2",
-    "jimp": "^0.22.10",
     "nodemailer": "^6.7.5",
     "npmlog": "^7.0.1",
     "ora": "^5.4.1",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
+    "priyanshu-fca": "^3.0.0",
     "qrcode-reader": "^1.0.4",
     "qs": "^6.11.0",
     "searchitunes": "^2.5.4",
